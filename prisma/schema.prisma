@@ -61,7 +61,6 @@ model DocumentChunk {
   createdAt  DateTime @default(now())
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 }
-
 model QuizResult {
   id             String   @id @default(cuid())
   topic          String

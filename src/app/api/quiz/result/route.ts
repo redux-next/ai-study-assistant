@@ -64,8 +64,7 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         {
-          error:
-            "Invalid quiz score.",
+          error: "Invalid quiz score.",
         },
         {
           status: 400,
@@ -83,8 +82,12 @@ export async function POST(request: Request) {
       ) / 100;
 
     // -----------------------------------------
-    // Save result
+    // Save quiz result
     // -----------------------------------------
+    // IMPORTANT:
+    // percentage is calculated but NOT stored
+    // because the current Prisma QuizResult
+    // model does not contain a percentage field.
 
     const quizResult =
       await prisma.quizResult.create({
@@ -93,20 +96,8 @@ export async function POST(request: Request) {
           difficulty,
           score,
           totalQuestions,
-          percentage,
         },
       });
-
-    // -----------------------------------------
-    // Also create study session
-    // -----------------------------------------
-
-    await prisma.studySession.create({
-      data: {
-        type: "quiz",
-        topic,
-      },
-    });
 
     // -----------------------------------------
     // Return result
@@ -114,6 +105,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+
       result: {
         id: quizResult.id,
         topic: quizResult.topic,
@@ -121,8 +113,10 @@ export async function POST(request: Request) {
         score: quizResult.score,
         totalQuestions:
           quizResult.totalQuestions,
-        percentage:
-          quizResult.percentage,
+
+        // Calculated for the API response only.
+        percentage,
+
         createdAt:
           quizResult.createdAt,
       },
