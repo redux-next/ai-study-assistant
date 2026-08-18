@@ -36,9 +36,9 @@ You can:
 ## 🚀 Live Demo
 
 🌐 **Live App:**  
-`[YOUR_VERCEL_URL_HERE](https://ai-study-assistant-anshk.vercel.app)`
+`https://ai-study-assistant-anshk.vercel.app`
 
-> Replace `[YOUR_VERCEL_URL_HERE](https://ai-study-assistant-anshk.vercel.app)` with your deployed Vercel URL.
+> Replace `https://ai-study-assistant-anshk.vercel.app` with your deployed Vercel URL.
 
 ---
 
