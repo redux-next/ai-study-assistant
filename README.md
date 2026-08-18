@@ -1,10 +1,10 @@
-# AI Study Assistant
+# 🤖 AI Study Assistant
 
-> Your personal AI-powered study companion for learning, practicing, and revising smarter.
+> **Your personal AI-powered study companion — learn smarter, understand better, and revise faster.**
 
-**AI Study Assistant** is a modern AI-powered study platform designed for students. It lets you ask questions, study uploaded PDFs, generate summaries, create quizzes and flashcards, and continue previous conversations — all from one place.
+AI Study Assistant is a modern, full-stack AI learning platform built for students. It combines AI chat, PDF/document understanding, summaries, quizzes, flashcards, chat history, profiles, and PWA support into one study workspace.
 
-The goal is simple: **make studying easier, more interactive, and more effective.**
+Instead of switching between multiple tools, students can **ask questions, upload study material, practice, and revise from one place.**
 
 ---
 
@@ -12,151 +12,117 @@ The goal is simple: **make studying easier, more interactive, and more effective
 
 ### 🤖 AI Study Chat
 
-Ask the AI questions about:
+Ask the AI about almost any study topic.
 
-- School subjects
-- Difficult concepts
-- General academic topics
-- Uploaded study material
-- Exam preparation
-- Revision topics
+- Ask questions about school subjects
+- Get simple explanations
+- Understand difficult concepts
+- Ask follow-up questions
+- Study topics outside uploaded documents
+- Continue conversations naturally
+- Get exam-focused explanations
 
-### 📄 PDF Study & Document Q&A
+---
 
-Upload study PDFs and interact with them using AI.
+### 📄 PDF & Document Study
+
+Upload your study PDFs and use them as AI context.
 
 You can:
 
-- Ask questions about PDFs
-- Find information from notes
+- Upload PDF study material
+- Process documents
+- Ask questions about uploaded PDFs
+- Find information inside notes
 - Understand difficult sections
-- Get explanations from uploaded material
-- Use documents as study context
+- Get explanations based on your documents
+- Continue studying from previously uploaded material
+
+The document content is processed into smaller chunks so relevant information can be provided to the AI when answering questions.
+
+---
 
 ### 📝 AI Summarization
 
-Turn lengthy study material into concise revision-friendly notes.
+Turn long study material into concise notes.
 
-### 🧠 AI Quizzes
+Useful for:
 
-Generate AI-powered quizzes to:
+- Chapter revision
+- Exam preparation
+- Long PDFs
+- Class notes
+- Quick revision
+- Last-minute study
 
-- Test your understanding
-- Practice before exams
-- Identify weak areas
+---
+
+### 🧠 AI Quiz Generator
+
+Generate AI-powered quizzes to test your knowledge.
+
+Use quizzes to:
+
+- Test understanding
+- Practice concepts
+- Prepare for exams
 - Improve active recall
+- Identify weak topics
+
+---
 
 ### 📚 AI Flashcards
 
-Create flashcards for:
+Generate flashcards for fast revision.
+
+Flashcards can be useful for:
 
 - Definitions
 - Formulas
 - Important facts
 - Concepts
-- Quick revision
+- Vocabulary
+- Exam revision
+
+---
 
 ### 💬 Chat History
 
-Previous conversations can be saved and accessed again so you can continue studying from where you stopped.
+Previous conversations can be saved and accessed again.
+
+Students can:
+
+- View recent chats
+- Continue previous conversations
+- Open specific conversations
+- Keep their study history organized
+
+---
 
 ### 👤 User Profiles
 
-Each user can have:
+Users have their own profile.
+
+Profile features include:
 
 - Name
 - Email
 - Profile avatar
 - Account information
+- Dynamic avatar loading
 
-### 🌙 Dark & Light Mode
-
-Switch between light and dark themes. Your preference is saved locally.
-
-### 📱 Progressive Web App
-
-AI Study Assistant supports installation as a Progressive Web App for an app-like experience.
-
-### ⚡ Responsive UI
-
-Designed for:
-
-- Desktop
-- Laptop
-- Tablet
-- Mobile
+The dashboard automatically displays the user's profile information.
 
 ---
 
-## 🖥️ Dashboard
+### 🖼️ Dynamic Profile Avatar
 
-The dashboard provides access to:
+Profile avatars are loaded dynamically through the profile avatar API.
 
-- Profile
-- Recent chats
-- Uploaded documents
-- Quick study actions
-- AI chat
-- PDF uploads
-- Quizzes
-- Flashcards
-- PWA installation
-- Theme controls
+Example:
 
----
-
-## 🧰 Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| Next.js | Full-stack React framework |
-| React | User interface |
-| TypeScript | Type-safe development |
-| Tailwind CSS | Styling |
-| Prisma | Database ORM |
-| PostgreSQL / Neon | Database |
-| OpenRouter | AI model access |
-| Vercel Blob | File storage |
-| React Markdown | Markdown rendering |
-| remark-gfm | GitHub Flavored Markdown |
-| remark-math | Math expressions |
-| rehype-katex | Math rendering |
-| Lucide React | UI icons |
-| PWA | Installable web application |
-
----
-
-## 🏗️ Architecture
-
-```text
-┌──────────────────────────────────────────────┐
-│                  Frontend                    │
-│                                              │
-│   Next.js + React + TypeScript + Tailwind   │
-│                                              │
-│   Dashboard │ Chat │ Profile │ Documents    │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│                 API Routes                   │
-│                                              │
-│  Authentication │ Chat │ Documents │ Quiz   │
-│  Profile │ Avatar │ Chat History             │
-└───────────────┬──────────────────────────────┘
-                │
-        ┌───────┴────────┐
-        ▼                ▼
-┌──────────────┐  ┌───────────────┐
-│   Prisma     │  │  OpenRouter   │
-│              │  │               │
-│ PostgreSQL   │  │   AI Models   │
-│ / Neon       │  │               │
-└──────────────┘  └───────────────┘
-        │
-        ▼
-┌──────────────────────┐
-│    Vercel Blob       │
-│                      │
-│ Uploaded PDF / Files │
-└──────────────────────┘
+<img
+  src="/api/profile/avatar/view"
+  alt={profile.name || "Profile avatar"}
+  className="h-full w-full object-cover"
+/>
