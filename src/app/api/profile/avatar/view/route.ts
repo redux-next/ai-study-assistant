@@ -68,7 +68,7 @@ export async function GET() {
       status: 200,
       headers: {
         "Content-Type":
-          blob.blob?.type ||
+          blob.blob?.contentType ||
           "image/jpeg",
 
         "Cache-Control":
