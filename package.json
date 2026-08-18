@@ -2,12 +2,7 @@
   "name": "ai-study-assistant",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
+"scripts": { "dev": "next dev", "build": "prisma generate && next build", "start": "next start" },
   "dependencies": {
     "@ai-sdk/google": "^4.0.44",
     "@ai-sdk/openai-compatible": "^3.0.30",
