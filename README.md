@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🧠 AI Study Assistant
 
-## Getting Started
+> Your personal AI-powered study companion for learning, revision, practice, and exam preparation.
 
-First, run the development server:
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql)](https://www.postgresql.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
+[![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-black?logo=vercel)](https://vercel.com/)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ What is AI Study Assistant?
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**AI Study Assistant** is a modern AI-powered learning platform designed to help students understand, practice, and revise their study material.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Instead of simply giving answers, the application is designed to make studying more interactive.
 
-## Learn More
+You can:
 
-To learn more about Next.js, take a look at the following resources:
+- 💬 Ask AI questions about any topic
+- 📄 Upload study PDFs
+- 🔍 Ask questions from uploaded documents
+- 📝 Summarize study material
+- 🧠 Generate quizzes
+- 📚 Generate flashcards
+- 📊 Track quiz results
+- 👤 Manage your profile
+- 🌓 Switch between light and dark mode
+- 💾 Continue previous chats
+- 📱 Use the application as a PWA
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚀 Live Demo
 
-## Deploy on Vercel
+🌐 **Live App:**  
+`YOUR_VERCEL_URL_HERE`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+> Replace `YOUR_VERCEL_URL_HERE` with your deployed Vercel URL.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🎯 Why I Built This
+
+Studying from large PDFs, textbooks, notes, and study material can become difficult when you need quick explanations or revision.
+
+AI Study Assistant brings these tools into one place.
+
+### Instead of:
+
+```text
+PDF
+ ↓
+Read everything
+ ↓
+Search manually
+ ↓
+Make notes
+ ↓
+Create questions
+ ↓
+Create flashcards
