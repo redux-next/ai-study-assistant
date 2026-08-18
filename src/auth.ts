@@ -15,7 +15,6 @@ export const { handlers, signIn, signOut, auth } =
             label: "Email",
             type: "email",
           },
-
           password: {
             label: "Password",
             type: "password",
@@ -41,11 +40,6 @@ export const { handlers, signIn, signOut, auth } =
               credentials.password
             );
 
-            console.log(
-              "AUTH: Looking for user:",
-              email
-            );
-
             const user =
               await prisma.user.findUnique({
                 where: {
@@ -54,24 +48,10 @@ export const { handlers, signIn, signOut, auth } =
               });
 
             if (!user) {
-              console.log(
-                "AUTH: User not found:",
-                email
-              );
-
               return null;
             }
 
-            console.log(
-              "AUTH: User found:",
-              user.email
-            );
-
             if (!user.password) {
-              console.log(
-                "AUTH: User has no password"
-              );
-
               return null;
             }
 
@@ -82,18 +62,8 @@ export const { handlers, signIn, signOut, auth } =
               );
 
             if (!passwordValid) {
-              console.log(
-                "AUTH: Invalid password for:",
-                email
-              );
-
               return null;
             }
-
-            console.log(
-              "AUTH: Login successful:",
-              email
-            );
 
             return {
               id: user.id,
