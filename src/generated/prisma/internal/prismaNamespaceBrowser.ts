@@ -81,6 +81,7 @@ export const UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   avatarUrl: 'avatarUrl',
+  avatarPathname: 'avatarPathname',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -113,10 +114,10 @@ export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeo
 export const DocumentScalarFieldEnum = {
   id: 'id',
   originalName: 'originalName',
-  createdAt: 'createdAt',
   fileUrl: 'fileUrl',
   filename: 'filename',
   status: 'status',
+  createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   userId: 'userId'
 } as const

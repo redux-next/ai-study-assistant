@@ -8,13 +8,15 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  name        String?
-  email       String       @unique
-  password    String
-  avatarUrl   String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  avatarUrl String?
+  avatarPathname String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   chats       Chat[]
   documents   Document[]
@@ -22,13 +24,15 @@ model User {
 }
 
 model Chat {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   title     String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  userId    String?
-  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages  Message[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String?
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messages Message[]
 }
 
 model Message {
@@ -36,21 +40,25 @@ model Message {
   role      String
   content   String
   createdAt DateTime @default(now())
-  chatId    String
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  chatId String
+  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }
 
 model Document {
-  id           String          @id @default(cuid())
+  id           String   @id @default(cuid())
   originalName String
-  createdAt    DateTime        @default(now())
   fileUrl      String
   filename     String
-  status       String          @default("uploaded")
-  updatedAt    DateTime        @updatedAt
-  userId       String?
-  user         User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chunks       DocumentChunk[]
+  status       String   @default("uploaded")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String?
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  chunks DocumentChunk[]
 }
 
 model DocumentChunk {
@@ -58,16 +66,21 @@ model DocumentChunk {
   documentId String
   content    String
   chunkIndex Int
-  createdAt  DateTime @default(now())
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 }
+
 model QuizResult {
   id             String   @id @default(cuid())
   topic          String
   difficulty     String
   score          Int
   totalQuestions Int
-  createdAt      DateTime @default(now())
-  userId         String?
-  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  userId String?
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

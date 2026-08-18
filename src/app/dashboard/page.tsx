@@ -6,6 +6,8 @@ import {
   ArrowRight,
   BookOpen,
   Brain,
+  Check,
+  Download,
   FileText,
   MessageCircle,
   Moon,
@@ -15,13 +17,14 @@ import {
   Upload,
   User,
   X,
+  Smartphone,
+  Zap,
+  ShieldCheck,
+  Minimize2,
+  Maximize2,
 } from "lucide-react";
 
 import UserMenu from "@/components/UserMenu";
-
-/* =========================================================
-   TYPES
-========================================================= */
 
 type RecentChat = {
   id: string;
@@ -43,139 +46,272 @@ type Profile = {
   avatarUrl?: string | null;
 };
 
-/* =========================================================
-   COMPONENT
-========================================================= */
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+};
 
 export default function DashboardPage() {
-  /* =========================================================
-     DATA
-  ========================================================= */
+  const [recentChats, setRecentChats] = useState<RecentChat[]>([]);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
 
-  const [recentChats, setRecentChats] =
-    useState<RecentChat[]>([]);
+  const [loadingChats, setLoadingChats] = useState(true);
+  const [loadingDocuments, setLoadingDocuments] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
-  const [documents, setDocuments] =
-    useState<DocumentItem[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
-  /* =========================================================
-     LOADING
-  ========================================================= */
+  /*
+   * Avatar refresh key.
+   *
+   * Changing this value forces the browser to request the
+   * avatar again instead of reusing the cached image.
+   */
+  const [avatarVersion, setAvatarVersion] = useState(Date.now());
 
-  const [loadingChats, setLoadingChats] =
-    useState(true);
-
-  const [loadingDocuments, setLoadingDocuments] =
-    useState(true);
-
-  const [loadingProfile, setLoadingProfile] =
-    useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+  const [themeLoaded, setThemeLoaded] = useState(false);
 
   /* =========================================================
-     PROFILE
+     PWA
   ========================================================= */
 
-  const [profile, setProfile] =
-    useState<Profile | null>(null);
+  const [installPrompt, setInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [installing, setInstalling] = useState(false);
+
+  /* iOS */
+
+  const [isIOS, setIsIOS] = useState(false);
+
+  /* Why app */
+
+  const [showWhyBubble, setShowWhyBubble] = useState(true);
+  const [minimizedWhyBubble, setMinimizedWhyBubble] = useState(false);
+
+  /* Temporary intro */
+
+  const [showIntroBubble, setShowIntroBubble] = useState(false);
+  const [introBubbleClosed, setIntroBubbleClosed] = useState(false);
 
   /* =========================================================
      THEME
   ========================================================= */
 
-  const [darkMode, setDarkMode] =
-    useState(false);
-
-  const [themeLoaded, setThemeLoaded] =
-    useState(false);
-
-  /* =========================================================
-     WHY BUBBLE
-  ========================================================= */
-
-  const [showWhyBubble, setShowWhyBubble] =
-    useState(true);
-
-  /* =========================================================
-     THEME INITIALIZATION
-  ========================================================= */
-
   useEffect(() => {
-    const savedTheme =
-      localStorage.getItem(
-        "ai-study-theme"
-      );
+    const savedTheme = localStorage.getItem("ai-study-theme");
 
     if (savedTheme === "dark") {
-      document.documentElement.classList.add(
-        "dark"
-      );
-
+      document.documentElement.classList.add("dark");
       setDarkMode(true);
-    } else if (
-      savedTheme === "light"
-    ) {
-      document.documentElement.classList.remove(
-        "dark"
-      );
-
+    } else if (savedTheme === "light") {
+      document.documentElement.classList.remove("dark");
       setDarkMode(false);
     } else {
-      const prefersDark =
-        window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches;
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
 
-      if (prefersDark) {
-        document.documentElement.classList.add(
-          "dark"
-        );
+      document.documentElement.classList.toggle(
+        "dark",
+        prefersDark
+      );
 
-        setDarkMode(true);
-      } else {
-        document.documentElement.classList.remove(
-          "dark"
-        );
-
-        setDarkMode(false);
-      }
+      setDarkMode(prefersDark);
     }
 
     setThemeLoaded(true);
   }, []);
 
-  /* =========================================================
-     TOGGLE DARK MODE
-  ========================================================= */
-
   function toggleDarkMode() {
-    const nextMode =
-      !darkMode;
+    const nextMode = !darkMode;
 
     setDarkMode(nextMode);
 
-    if (nextMode) {
-      document.documentElement.classList.add(
-        "dark"
-      );
+    document.documentElement.classList.toggle(
+      "dark",
+      nextMode
+    );
 
-      localStorage.setItem(
-        "ai-study-theme",
-        "dark"
-      );
-    } else {
-      document.documentElement.classList.remove(
-        "dark"
-      );
-
-      localStorage.setItem(
-        "ai-study-theme",
-        "light"
-      );
-    }
+    localStorage.setItem(
+      "ai-study-theme",
+      nextMode ? "dark" : "light"
+    );
   }
 
   /* =========================================================
-     WHY BUBBLE
+     TEMPORARY APP INTRO BUBBLE
+  ========================================================= */
+
+  useEffect(() => {
+    const alreadyShown = sessionStorage.getItem(
+      "ai-study-intro-shown"
+    );
+
+    if (alreadyShown === "true") {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowIntroBubble(true);
+
+      sessionStorage.setItem(
+        "ai-study-intro-shown",
+        "true"
+      );
+    }, 1800);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, []);
+
+  function closeIntroBubble() {
+    setShowIntroBubble(false);
+    setIntroBubbleClosed(true);
+  }
+
+  /* =========================================================
+     PWA
+  ========================================================= */
+
+  useEffect(() => {
+    const checkInstalled = () => {
+      const standalone = window.matchMedia(
+        "(display-mode: standalone)"
+      ).matches;
+
+      const iosStandalone =
+        (window.navigator as Navigator & {
+          standalone?: boolean;
+        }).standalone === true;
+
+      setIsInstalled(
+        standalone || iosStandalone
+      );
+    };
+
+    const detectIOS = () => {
+      const userAgent =
+        window.navigator.userAgent ||
+        window.navigator.vendor ||
+        "";
+
+      const ios =
+        /iPad|iPhone|iPod/.test(userAgent) ||
+        (navigator.platform === "MacIntel" &&
+          navigator.maxTouchPoints > 1);
+
+      setIsIOS(ios);
+    };
+
+    checkInstalled();
+    detectIOS();
+
+    const handleBeforeInstallPrompt = (
+      event: Event
+    ) => {
+      event.preventDefault();
+
+      const installEvent =
+        event as BeforeInstallPromptEvent;
+
+      setInstallPrompt(installEvent);
+
+      const dismissed =
+        localStorage.getItem(
+          "ai-study-pwa-dismissed"
+        );
+
+      if (dismissed !== "true") {
+        setShowInstallBanner(true);
+      }
+    };
+
+    const handleAppInstalled = () => {
+      setInstallPrompt(null);
+      setIsInstalled(true);
+      setShowInstallBanner(false);
+
+      localStorage.setItem(
+        "ai-study-pwa-installed",
+        "true"
+      );
+    };
+
+    window.addEventListener(
+      "beforeinstallprompt",
+      handleBeforeInstallPrompt
+    );
+
+    window.addEventListener(
+      "appinstalled",
+      handleAppInstalled
+    );
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
+
+      window.removeEventListener(
+        "appinstalled",
+        handleAppInstalled
+      );
+    };
+  }, []);
+
+  async function installPWA() {
+    if (!installPrompt) {
+      return;
+    }
+
+    try {
+      setInstalling(true);
+
+      await installPrompt.prompt();
+
+      const result =
+        await installPrompt.userChoice;
+
+      if (result.outcome === "accepted") {
+        localStorage.setItem(
+          "ai-study-pwa-installed",
+          "true"
+        );
+
+        setShowInstallBanner(false);
+      }
+
+      setInstallPrompt(null);
+    } catch (error) {
+      console.error(
+        "PWA installation failed:",
+        error
+      );
+    } finally {
+      setInstalling(false);
+    }
+  }
+
+  function dismissInstallBanner() {
+    setShowInstallBanner(false);
+
+    localStorage.setItem(
+      "ai-study-pwa-dismissed",
+      "true"
+    );
+  }
+
+  /* =========================================================
+     WHY APP BUBBLE
   ========================================================= */
 
   useEffect(() => {
@@ -184,8 +320,17 @@ export default function DashboardPage() {
         "ai-study-why-bubble-hidden"
       );
 
+    const minimized =
+      localStorage.getItem(
+        "ai-study-why-bubble-minimized"
+      );
+
     if (hidden === "true") {
       setShowWhyBubble(false);
+    }
+
+    if (minimized === "true") {
+      setMinimizedWhyBubble(true);
     }
   }, []);
 
@@ -195,6 +340,17 @@ export default function DashboardPage() {
     localStorage.setItem(
       "ai-study-why-bubble-hidden",
       "true"
+    );
+  }
+
+  function toggleWhyBubble() {
+    const next = !minimizedWhyBubble;
+
+    setMinimizedWhyBubble(next);
+
+    localStorage.setItem(
+      "ai-study-why-bubble-minimized",
+      String(next)
     );
   }
 
@@ -209,38 +365,102 @@ export default function DashboardPage() {
   }, []);
 
   /* =========================================================
-     LOAD PROFILE
+     AUTOMATIC PROFILE / AVATAR REFRESH
   ========================================================= */
+
+  useEffect(() => {
+    /*
+     * Refresh profile whenever the dashboard becomes visible.
+     *
+     * Example:
+     * User changes avatar on /profile
+     * -> comes back to dashboard
+     * -> profile is fetched again
+     * -> avatarVersion changes
+     * -> image updates automatically.
+     */
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadProfile();
+      }
+    };
+
+    /*
+     * Refresh when the browser window receives focus.
+     */
+    const handleWindowFocus = () => {
+      loadProfile();
+    };
+
+    /*
+     * Listen for profile updates from another tab/window.
+     */
+    const handleStorage = (
+      event: StorageEvent
+    ) => {
+      if (
+        event.key === "ai-study-profile-updated" ||
+        event.key === "profile-updated" ||
+        event.key === "avatar-updated"
+      ) {
+        loadProfile();
+      }
+    };
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    window.addEventListener(
+      "focus",
+      handleWindowFocus
+    );
+
+    window.addEventListener(
+      "storage",
+      handleStorage
+    );
+
+    return () => {
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+
+      window.removeEventListener(
+        "focus",
+        handleWindowFocus
+      );
+
+      window.removeEventListener(
+        "storage",
+        handleStorage
+      );
+    };
+  }, []);
 
   async function loadProfile() {
     try {
       setLoadingProfile(true);
 
-      const response =
-        await fetch(
-          "/api/profile",
-          {
-            method: "GET",
-            cache: "no-store",
-          }
-        );
+      const response = await fetch(
+        "/api/profile",
+        {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        }
+      );
 
       if (!response.ok) {
         setProfile(null);
         return;
       }
 
-      const data =
-        await response.json();
-
-      /*
-       * Supports all of these response formats:
-       *
-       * { user: {...} }
-       * { profile: {...} }
-       * { data: {...} }
-       * { id, name, email, avatarUrl }
-       */
+      const data = await response.json();
 
       const user =
         data.user ||
@@ -250,22 +470,23 @@ export default function DashboardPage() {
 
       if (user) {
         setProfile({
-          id:
-            user.id ??
-            undefined,
-
-          name:
-            user.name ??
-            null,
-
-          email:
-            user.email ??
-            null,
-
-          avatarUrl:
-            user.avatarUrl ??
-            null,
+          id: user.id ?? undefined,
+          name: user.name ?? null,
+          email: user.email ?? null,
+          avatarUrl: user.avatarUrl ?? null,
         });
+
+        /*
+         * Generate a new version every time the profile
+         * is fetched.
+         *
+         * This makes the browser request:
+         *
+         * /api/profile/avatar/view?v=123
+         *
+         * instead of always using the same cached URL.
+         */
+        setAvatarVersion(Date.now());
       } else {
         setProfile(null);
       }
@@ -281,40 +502,30 @@ export default function DashboardPage() {
     }
   }
 
-  /* =========================================================
-     LOAD RECENT CHATS
-  ========================================================= */
-
   async function loadRecentChats() {
     try {
-      const response =
-        await fetch(
-          "/api/chats/recent",
-          {
-            method: "GET",
-            cache: "no-store",
-          }
-        );
+      const response = await fetch(
+        "/api/chats/recent",
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
 
       if (!response.ok) {
         setRecentChats([]);
         return;
       }
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       const chats =
         data.chats ||
         data.data ||
         [];
 
-      if (
-        Array.isArray(chats)
-      ) {
-        setRecentChats(
-          chats
-        );
+      if (Array.isArray(chats)) {
+        setRecentChats(chats);
       }
     } catch (error) {
       console.error(
@@ -328,40 +539,30 @@ export default function DashboardPage() {
     }
   }
 
-  /* =========================================================
-     LOAD DOCUMENTS
-  ========================================================= */
-
   async function loadDocuments() {
     try {
-      const response =
-        await fetch(
-          "/api/documents",
-          {
-            method: "GET",
-            cache: "no-store",
-          }
-        );
+      const response = await fetch(
+        "/api/documents",
+        {
+          method: "GET",
+          cache: "no-store",
+        }
+      );
 
       if (!response.ok) {
         setDocuments([]);
         return;
       }
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       const docs =
         data.documents ||
         data.data ||
         [];
 
-      if (
-        Array.isArray(docs)
-      ) {
-        setDocuments(
-          docs
-        );
+      if (Array.isArray(docs)) {
+        setDocuments(docs);
       }
     } catch (error) {
       console.error(
@@ -376,20 +577,16 @@ export default function DashboardPage() {
   }
 
   /* =========================================================
-     FORMAT DATE
+     HELPERS
   ========================================================= */
 
-  function formatDate(
-    date?: string
-  ) {
+  function formatDate(date?: string) {
     if (!date) {
       return "";
     }
 
     try {
-      return new Date(
-        date
-      ).toLocaleDateString(
+      return new Date(date).toLocaleDateString(
         "en-IN",
         {
           day: "numeric",
@@ -402,10 +599,6 @@ export default function DashboardPage() {
     }
   }
 
-  /* =========================================================
-     AVATAR HELPERS
-  ========================================================= */
-
   function getInitials(
     name?: string | null,
     email?: string | null
@@ -415,33 +608,25 @@ export default function DashboardPage() {
       email?.trim() ||
       "User";
 
-    const parts =
-      value.split(
-        /\s+/
-      );
+    const parts = value.split(/\s+/);
 
-    if (
-      parts.length >= 2
-    ) {
+    if (parts.length >= 2) {
       return (
         parts[0][0] +
         parts[1][0]
       ).toUpperCase();
     }
 
-    return value
-      .slice(0, 2)
-      .toUpperCase();
+    return value.slice(0, 2).toUpperCase();
   }
 
-  const initials =
-    getInitials(
-      profile?.name,
-      profile?.email
-    );
+  const initials = getInitials(
+    profile?.name,
+    profile?.email
+  );
 
   /* =========================================================
-     AVATAR
+     PROFILE AVATAR
   ========================================================= */
 
   function ProfileAvatar({
@@ -451,34 +636,48 @@ export default function DashboardPage() {
   }) {
     const sizeClasses =
       size === "large"
-        ? "h-12 w-12"
+        ? "h-12 w-12 sm:h-14 sm:w-14"
         : "h-9 w-9";
 
     const textSize =
       size === "large"
-        ? "text-sm"
+        ? "text-sm sm:text-base"
         : "text-xs";
+
+    /*
+     * Cache-busted avatar URL.
+     *
+     * Every time avatarVersion changes, the browser treats
+     * this as a fresh image request.
+     */
+    const avatarSrc = profile?.avatarUrl
+      ? `/api/profile/avatar/view?v=${avatarVersion}`
+      : null;
 
     return (
       <div
         className={`relative flex ${sizeClasses} shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-primary/10 ${textSize} font-bold text-primary shadow-sm`}
       >
         {!loadingProfile &&
-        profile?.avatarUrl ? (
+        avatarSrc ? (
           <img
-            src={profile.avatarUrl}
+            key={avatarSrc}
+            src={avatarSrc}
             alt={
-              profile.name ||
+              profile?.name ||
               "Profile avatar"
             }
             className="h-full w-full object-cover"
+            loading="eager"
+            onError={(event) => {
+              event.currentTarget.style.display =
+                "none";
+            }}
           />
         ) : loadingProfile ? (
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
         ) : (
-          <span>
-            {initials}
-          </span>
+          <span>{initials}</span>
         )}
       </div>
     );
@@ -489,211 +688,266 @@ export default function DashboardPage() {
   ========================================================= */
 
   return (
-    <main className="min-h-screen bg-background text-foreground transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
 
-      {/* ================================================= */}
-      {/* HEADER */}
-      {/* ================================================= */}
+      {/* =====================================================
+          STICKY HEADER
+      ===================================================== */}
 
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur transition-colors duration-300 sm:px-6">
+      <header
+        className="
+          sticky
+          top-0
+          z-[9999]
+          w-full
+          border-b
+          border-border/70
+          bg-background
+          shadow-sm
+        "
+        style={{
+          paddingTop:
+            "env(safe-area-inset-top)",
+        }}
+      >
+        <div
+          className="
+            flex
+            min-h-16
+            w-full
+            items-center
+            justify-between
+            gap-3
+            px-3
+            sm:px-6
+          "
+        >
+          {/* LOGO */}
 
-        {/* LEFT */}
+          <Link
+            href="/"
+            className="group flex min-w-0 items-center gap-2.5"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 sm:h-10 sm:w-10">
+              <Brain className="h-5 w-5 text-primary" />
+            </div>
 
-        <div className="flex min-w-0 items-center gap-3">
+            <div className="min-w-0">
+              <h1 className="truncate text-sm font-bold sm:text-base">
+                AI Study Assistant
+              </h1>
 
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-            <Brain className="h-5 w-5 text-primary" />
-          </div>
+              <p className="hidden text-xs text-muted-foreground sm:block">
+                Your personal AI study companion
+              </p>
+            </div>
+          </Link>
 
-          <div className="min-w-0">
+          {/* HEADER ACTIONS */}
 
-            <h1 className="truncate text-base font-bold">
-              AI Study Assistant
-            </h1>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
 
-            <p className="hidden text-xs text-muted-foreground sm:block">
-              Your personal AI study companion
-            </p>
+            {!isInstalled &&
+              installPrompt && (
+                <button
+                  type="button"
+                  onClick={installPWA}
+                  disabled={installing}
+                  className="
+                    flex
+                    h-10
+                    items-center
+                    gap-2
+                    rounded-xl
+                    border
+                    bg-background
+                    px-3
+                    text-xs
+                    font-semibold
+                    transition
+                    hover:bg-muted
+                    disabled:opacity-60
+                    sm:text-sm
+                  "
+                >
+                  {installing ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary" />
+                  ) : (
+                    <Download className="h-4 w-4 text-primary" />
+                  )}
 
-          </div>
-
-        </div>
-
-        {/* RIGHT */}
-
-        <div className="flex items-center gap-2">
-
-          {/* DARK MODE */}
-
-          {themeLoaded && (
-            <button
-              type="button"
-              onClick={
-                toggleDarkMode
-              }
-              aria-label={
-                darkMode
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
-              title={
-                darkMode
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
-              className="flex h-10 w-10 items-center justify-center rounded-xl border bg-background transition-all duration-200 hover:bg-muted"
-            >
-              {darkMode ? (
-                <Sun className="h-5 w-5 text-yellow-500" />
-              ) : (
-                <Moon className="h-5 w-5 text-muted-foreground" />
+                  <span className="hidden sm:inline">
+                    Install
+                  </span>
+                </button>
               )}
-            </button>
-          )}
 
-          {/* USER MENU */}
+            {themeLoaded && (
+              <button
+                type="button"
+                onClick={toggleDarkMode}
+                aria-label={
+                  darkMode
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
+                }
+                className="
+                  flex
+                  h-10
+                  w-10
+                  items-center
+                  justify-center
+                  rounded-xl
+                  border
+                  bg-background
+                  transition
+                  hover:bg-muted
+                  active:scale-95
+                "
+              >
+                {darkMode ? (
+                  <Sun className="h-5 w-5 text-yellow-500" />
+                ) : (
+                  <Moon className="h-5 w-5 text-muted-foreground" />
+                )}
+              </button>
+            )}
 
-          <UserMenu />
-
+            <UserMenu />
+          </div>
         </div>
       </header>
 
-      {/* ================================================= */}
-      {/* MAIN */}
-      {/* ================================================= */}
+      {/* =====================================================
+          CONTENT
+      ===================================================== */}
 
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
 
-        {/* ================================================= */}
-        {/* PROFILE / AVATAR WELCOME */}
-        {/* ================================================= */}
+        {/* PROFILE */}
 
-        <section className="mb-6 flex items-center justify-between gap-4">
+        <section className="mb-6 flex items-center justify-between gap-3 sm:mb-8">
 
           <div className="flex min-w-0 items-center gap-3">
 
-            {/* UPDATED AVATAR */}
-
             <Link
               href="/profile"
-              aria-label="Open profile"
               className="group relative block shrink-0 rounded-full"
             >
               <ProfileAvatar size="large" />
 
-              {/* ONLINE / PROFILE INDICATOR */}
-
               <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-background bg-emerald-500" />
-
-              {/* HOVER RING */}
-
-              <span className="pointer-events-none absolute inset-0 rounded-full ring-0 ring-primary/30 transition-all duration-200 group-hover:ring-4" />
             </Link>
 
-            {/* WELCOME */}
-
             <div className="min-w-0">
-
               <p className="text-xs text-muted-foreground">
                 Welcome back
               </p>
 
-              <h2 className="truncate text-lg font-bold">
+              <h2 className="truncate text-base font-bold sm:text-lg">
                 {loadingProfile
                   ? "Loading..."
-                  : profile?.name ||
-                    "Student"}
+                  : profile?.name || "Student"}
               </h2>
 
               {profile?.email && (
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="max-w-[180px] truncate text-xs text-muted-foreground sm:max-w-xs">
                   {profile.email}
                 </p>
               )}
-
             </div>
-
           </div>
-
-          {/* PROFILE BUTTON */}
 
           <Link
             href="/profile"
             className="hidden items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition hover:bg-muted sm:inline-flex"
           >
             <User className="h-4 w-4" />
-
             Profile
           </Link>
-
         </section>
 
-        {/* ================================================= */}
         {/* HERO */}
-        {/* ================================================= */}
 
-        <section className="relative overflow-hidden rounded-3xl border bg-card p-6 transition-colors duration-300 sm:p-8">
+        <section className="relative overflow-hidden rounded-3xl border bg-card p-5 shadow-sm sm:p-8">
 
-          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+
+          <div className="pointer-events-none absolute -bottom-24 -left-20 h-48 w-48 rounded-full bg-primary/5 blur-3xl" />
 
           <div className="relative">
 
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-xs font-medium">
-
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1.5 text-xs font-medium">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-
               AI-powered learning
-
             </div>
 
-            <h2 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
               Learn smarter.
               <br />
-              Study better.
+              <span className="text-primary">
+                Study better.
+              </span>
             </h2>
 
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
               Ask questions, understand difficult topics,
               summarize notes, generate quizzes, and revise
-              with flashcards.
+              with flashcards — all in one place.
             </p>
 
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
 
               <Link
                 href="/chat"
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:opacity-90"
               >
                 <MessageCircle className="h-4 w-4" />
-
                 Start Studying
-
                 <ArrowRight className="h-4 w-4" />
               </Link>
 
               <Link
                 href="/chat"
-                className="inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-medium transition hover:bg-muted"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-background/70 px-5 py-2.5 text-sm font-medium transition hover:bg-muted"
               >
                 <Upload className="h-4 w-4" />
-
                 Upload PDF
               </Link>
 
             </div>
 
-          </div>
+            <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
 
+              <span className="flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-primary" />
+                Ask anything
+              </span>
+
+              <span className="flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-primary" />
+                Study PDFs
+              </span>
+
+              <span className="flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-primary" />
+                AI quizzes
+              </span>
+
+              <span className="flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-primary" />
+                Flashcards
+              </span>
+
+            </div>
+          </div>
         </section>
 
-        {/* ================================================= */}
         {/* QUICK ACTIONS */}
-        {/* ================================================= */}
 
-        <section className="mt-8">
+        <section className="mt-8 sm:mt-10">
 
           <div className="mb-4">
-
             <h2 className="text-lg font-semibold">
               Quick actions
             </h2>
@@ -701,101 +955,71 @@ export default function DashboardPage() {
             <p className="text-sm text-muted-foreground">
               Choose how you want to study.
             </p>
-
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
 
-            <Link
-              href="/chat"
-              className="group rounded-2xl border bg-card p-5 transition hover:-translate-y-0.5 hover:bg-muted/50"
-            >
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <MessageCircle className="h-5 w-5 text-primary" />
-              </div>
+            {[
+              {
+                icon: MessageCircle,
+                title: "Ask AI",
+                description:
+                  "Ask questions about any topic.",
+              },
+              {
+                icon: FileText,
+                title: "Summarize",
+                description:
+                  "Turn long study material into concise notes.",
+              },
+              {
+                icon: Brain,
+                title: "Take a Quiz",
+                description:
+                  "Test yourself with AI-generated questions.",
+              },
+              {
+                icon: BookOpen,
+                title: "Flashcards",
+                description:
+                  "Revise important concepts quickly.",
+              },
+            ].map((item) => {
+              const Icon = item.icon;
 
-              <h3 className="font-semibold">
-                Ask AI
-              </h3>
+              return (
+                <Link
+                  key={item.title}
+                  href="/chat"
+                  className="group rounded-2xl border bg-card p-4 shadow-sm transition-all hover:-translate-y-1 hover:bg-muted/50 hover:shadow-md sm:p-5"
+                >
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
 
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Ask questions about any topic.
-              </p>
+                  <h3 className="font-semibold">
+                    {item.title}
+                  </h3>
 
-              <ArrowRight className="mt-4 h-4 w-4 transition group-hover:translate-x-1" />
-            </Link>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {item.description}
+                  </p>
 
-            <Link
-              href="/chat"
-              className="group rounded-2xl border bg-card p-5 transition hover:-translate-y-0.5 hover:bg-muted/50"
-            >
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-
-              <h3 className="font-semibold">
-                Summarize
-              </h3>
-
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Turn long study material into concise notes.
-              </p>
-
-              <ArrowRight className="mt-4 h-4 w-4 transition group-hover:translate-x-1" />
-            </Link>
-
-            <Link
-              href="/chat"
-              className="group rounded-2xl border bg-card p-5 transition hover:-translate-y-0.5 hover:bg-muted/50"
-            >
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <Brain className="h-5 w-5 text-primary" />
-              </div>
-
-              <h3 className="font-semibold">
-                Take a Quiz
-              </h3>
-
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Test yourself with AI-generated questions.
-              </p>
-
-              <ArrowRight className="mt-4 h-4 w-4 transition group-hover:translate-x-1" />
-            </Link>
-
-            <Link
-              href="/chat"
-              className="group rounded-2xl border bg-card p-5 transition hover:-translate-y-0.5 hover:bg-muted/50"
-            >
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <BookOpen className="h-5 w-5 text-primary" />
-              </div>
-
-              <h3 className="font-semibold">
-                Flashcards
-              </h3>
-
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Revise important concepts quickly.
-              </p>
-
-              <ArrowRight className="mt-4 h-4 w-4 transition group-hover:translate-x-1" />
-            </Link>
+                  <ArrowRight className="mt-4 h-4 w-4 transition group-hover:translate-x-1" />
+                </Link>
+              );
+            })}
 
           </div>
-
         </section>
 
-        {/* ================================================= */}
         {/* RECENT CHATS */}
-        {/* ================================================= */}
 
-        <section className="mt-10">
+        <section className="mt-10 sm:mt-12">
 
           <div className="mb-4 flex items-end justify-between gap-4">
 
             <div>
-
               <h2 className="text-lg font-semibold">
                 Recent chats
               </h2>
@@ -803,12 +1027,11 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 Continue where you left off.
               </p>
-
             </div>
 
             <Link
               href="/chat"
-              className="text-sm font-medium text-primary hover:underline"
+              className="shrink-0 text-sm font-medium text-primary hover:underline"
             >
               Open chat
             </Link>
@@ -817,19 +1040,13 @@ export default function DashboardPage() {
 
           {loadingChats ? (
             <div className="flex items-center justify-center rounded-2xl border p-10">
-
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary" />
-
                 Loading recent chats...
-
               </div>
-
             </div>
           ) : recentChats.length === 0 ? (
-
-            <div className="rounded-2xl border border-dashed p-8 text-center">
+            <div className="rounded-2xl border border-dashed p-7 text-center sm:p-8">
 
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
                 <MessageCircle className="h-5 w-5 text-muted-foreground" />
@@ -839,77 +1056,60 @@ export default function DashboardPage() {
                 No recent chats
               </h3>
 
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
                 Start a conversation with your AI study assistant.
               </p>
 
               <Link
                 href="/chat"
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
               >
                 <Plus className="h-4 w-4" />
-
                 New Chat
               </Link>
 
             </div>
-
           ) : (
+            <div className="grid gap-2.5">
 
-            <div className="grid gap-3">
+              {recentChats.slice(0, 5).map((chat) => (
+                <Link
+                  key={chat.id}
+                  href={`/chat?chatId=${encodeURIComponent(
+                    chat.id
+                  )}`}
+                  className="group flex min-w-0 items-center gap-3 rounded-2xl border bg-card p-3.5 shadow-sm transition hover:bg-muted/50 hover:shadow-md sm:gap-4 sm:p-4"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                    <MessageCircle className="h-5 w-5 text-primary" />
+                  </div>
 
-              {recentChats
-                .slice(0, 5)
-                .map((chat) => (
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {chat.title ||
+                        "Untitled chat"}
+                    </p>
 
-                  <Link
-                    key={chat.id}
-                    href={`/chat?chatId=${encodeURIComponent(
-                      chat.id
-                    )}`}
-                    className="flex items-center gap-4 rounded-2xl border bg-card p-4 transition hover:bg-muted/50"
-                  >
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatDate(chat.createdAt)}
+                    </p>
+                  </div>
 
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                      <MessageCircle className="h-5 w-5 text-primary" />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-
-                      <p className="truncate text-sm font-medium">
-                        {chat.title ||
-                          "Untitled chat"}
-                      </p>
-
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {formatDate(
-                          chat.createdAt
-                        )}
-                      </p>
-
-                    </div>
-
-                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-
-                  </Link>
-
-                ))}
+                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-1" />
+                </Link>
+              ))}
 
             </div>
           )}
-
         </section>
 
-        {/* ================================================= */}
         {/* DOCUMENTS */}
-        {/* ================================================= */}
 
-        <section className="mt-10">
+        <section className="mt-10 sm:mt-12">
 
           <div className="mb-4 flex items-end justify-between gap-4">
 
             <div>
-
               <h2 className="text-lg font-semibold">
                 Your documents
               </h2>
@@ -917,37 +1117,27 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 PDFs you have uploaded for studying.
               </p>
-
             </div>
 
             <Link
               href="/chat"
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
             >
               Upload PDF
-
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
 
           </div>
 
           {loadingDocuments ? (
-
             <div className="flex items-center justify-center rounded-2xl border p-10">
-
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary" />
-
                 Loading documents...
-
               </div>
-
             </div>
-
           ) : documents.length === 0 ? (
-
-            <div className="rounded-2xl border border-dashed p-8 text-center">
+            <div className="rounded-2xl border border-dashed p-7 text-center sm:p-8">
 
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
                 <FileText className="h-5 w-5 text-muted-foreground" />
@@ -957,252 +1147,404 @@ export default function DashboardPage() {
                 No documents yet
               </h3>
 
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
                 Upload a PDF to start asking questions about it.
               </p>
 
               <Link
                 href="/chat"
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
               >
                 <Upload className="h-4 w-4" />
-
                 Upload PDF
               </Link>
 
             </div>
-
           ) : (
-
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 
-              {documents
-                .slice(0, 6)
-                .map((document) => (
+              {documents.slice(0, 6).map((document) => (
+                <Link
+                  key={document.id}
+                  href={`/chat?documentId=${encodeURIComponent(
+                    document.id
+                  )}`}
+                  className="group rounded-2xl border bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+                >
+                  <div className="flex items-start gap-3">
 
-                  <Link
-                    key={document.id}
-                    href={`/chat?documentId=${encodeURIComponent(
-                      document.id
-                    )}`}
-                    className="group rounded-2xl border bg-card p-4 transition hover:bg-muted/50"
-                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
 
-                    <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {document.originalName ||
+                          document.filename ||
+                          "Untitled document"}
+                      </p>
 
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                        <FileText className="h-5 w-5 text-primary" />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-
-                        <p className="truncate text-sm font-medium">
-                          {document.originalName ||
-                            document.filename ||
-                            "Untitled document"}
+                      {document.createdAt && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {formatDate(
+                            document.createdAt
+                          )}
                         </p>
-
-                        {document.createdAt && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {formatDate(
-                              document.createdAt
-                            )}
-                          </p>
-                        )}
-
-                      </div>
-
+                      )}
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                  </div>
 
-                      <span>
-                        Open document
-                      </span>
+                  <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Open document</span>
 
-                      <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
-
-                    </div>
-
-                  </Link>
-
-                ))}
+                    <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+                  </div>
+                </Link>
+              ))}
 
             </div>
-
           )}
-
         </section>
 
       </div>
 
-      {/* ================================================= */}
-      {/* WHY THIS APP BUBBLE */}
-      {/* ================================================= */}
+      {/* =====================================================
+          PWA INSTALL BANNER
+      ===================================================== */}
 
-      {showWhyBubble && (
+      {!isInstalled &&
+        showInstallBanner &&
+        (installPrompt || isIOS) && (
+          <div
+            className="
+              fixed
+              inset-x-3
+              bottom-3
+              z-[9998]
+              sm:bottom-6
+              sm:left-6
+              sm:right-auto
+              sm:w-[390px]
+            "
+          >
+            <div className="relative overflow-hidden rounded-3xl border bg-background p-4 shadow-2xl sm:p-5">
 
-        <div className="fixed bottom-6 left-4 z-50 w-[calc(100vw-2rem)] max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-300 sm:left-6">
+              <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary/15 blur-3xl" />
 
-          <div className="relative overflow-hidden rounded-3xl border bg-background/95 p-5 shadow-2xl backdrop-blur-xl">
+              <button
+                type="button"
+                onClick={dismissInstallBanner}
+                aria-label="Close install banner"
+                className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+              >
+                <X className="h-4 w-4" />
+              </button>
 
-            {/* DECORATIVE GLOW */}
+              <div className="relative flex gap-3 pr-6">
 
-            <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary/20 blur-2xl" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+                  <Smartphone className="h-5 w-5 text-primary" />
+                </div>
 
-            {/* CLOSE */}
+                <div className="min-w-0">
+
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                    Install the app
+                  </p>
+
+                  <h3 className="mt-1 text-sm font-bold sm:text-base">
+                    Study faster with AI Study Assistant
+                  </h3>
+
+                  {isIOS && !installPrompt ? (
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      On iPhone or iPad, tap the
+                      <strong> Share </strong>
+                      button in Safari and choose
+                      <strong> Add to Home Screen</strong>.
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      Install the app for a faster,
+                      app-like study experience.
+                    </p>
+                  )}
+
+                </div>
+              </div>
+
+              <div className="relative mt-4 grid grid-cols-3 gap-2">
+
+                <div className="rounded-xl bg-muted/60 p-2.5 text-center">
+                  <Zap className="mx-auto h-4 w-4 text-primary" />
+                  <p className="mt-1 text-[10px] font-medium">
+                    Faster
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-muted/60 p-2.5 text-center">
+                  <Smartphone className="mx-auto h-4 w-4 text-primary" />
+                  <p className="mt-1 text-[10px] font-medium">
+                    App-like
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-muted/60 p-2.5 text-center">
+                  <ShieldCheck className="mx-auto h-4 w-4 text-primary" />
+                  <p className="mt-1 text-[10px] font-medium">
+                    Convenient
+                  </p>
+                </div>
+
+              </div>
+
+              {installPrompt && !isIOS && (
+                <div className="relative mt-4 flex gap-2">
+
+                  <button
+                    type="button"
+                    onClick={installPWA}
+                    disabled={installing}
+                    className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+                  >
+                    {installing ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}
+
+                    {installing
+                      ? "Installing..."
+                      : "Install App"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={dismissInstallBanner}
+                    className="rounded-xl border px-4 py-2 text-xs font-medium hover:bg-muted"
+                  >
+                    Later
+                  </button>
+
+                </div>
+              )}
+
+              {isIOS && !installPrompt && (
+                <button
+                  type="button"
+                  onClick={dismissInstallBanner}
+                  className="relative mt-4 w-full rounded-xl border px-4 py-2.5 text-xs font-medium hover:bg-muted"
+                >
+                  Got it
+                </button>
+              )}
+
+            </div>
+          </div>
+        )}
+
+      {/* =====================================================
+          WHY APP MINIMIZED
+      ===================================================== */}
+
+      {showWhyBubble &&
+        minimizedWhyBubble && (
+          <div className="fixed bottom-3 left-3 z-[9990] sm:bottom-6 sm:left-6">
 
             <button
               type="button"
-              onClick={
-                closeWhyBubble
-              }
-              aria-label="Close information bubble"
-              title="Close"
-              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              onClick={toggleWhyBubble}
+              className="group flex items-center gap-2.5 rounded-2xl border bg-background px-3 py-2.5 shadow-xl transition hover:-translate-y-1 hover:shadow-2xl"
             >
-              <X className="h-4 w-4" />
-            </button>
-
-            {/* CONTENT */}
-
-            <div className="relative">
-
-              <div className="flex items-start gap-3 pr-7">
-
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
-
-                <div>
-
-                  <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-                    Why this app?
-                  </p>
-
-                  <h3 className="mt-1 text-base font-bold">
-                    Built for students who want to study smarter.
-                  </h3>
-
-                </div>
-
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+                <Sparkles className="h-4 w-4 text-primary" />
               </div>
 
-              <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                AI Study Assistant helps you turn your study
-                material into something easier to understand,
-                practice, and revise.
-              </p>
-
-              <div className="mt-4 grid grid-cols-2 gap-2">
-
-                <div className="rounded-2xl bg-muted/60 p-3">
-
-                  <MessageCircle className="mb-2 h-4 w-4 text-primary" />
-
-                  <p className="text-xs font-semibold">
-                    Ask anything
-                  </p>
-
-                  <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
-                    Get explanations in simple language.
-                  </p>
-
-                </div>
-
-                <div className="rounded-2xl bg-muted/60 p-3">
-
-                  <FileText className="mb-2 h-4 w-4 text-primary" />
-
-                  <p className="text-xs font-semibold">
-                    Study PDFs
-                  </p>
-
-                  <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
-                    Ask questions directly from your notes.
-                  </p>
-
-                </div>
-
-                <div className="rounded-2xl bg-muted/60 p-3">
-
-                  <Brain className="mb-2 h-4 w-4 text-primary" />
-
-                  <p className="text-xs font-semibold">
-                    Practice
-                  </p>
-
-                  <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
-                    Generate quizzes to test yourself.
-                  </p>
-
-                </div>
-
-                <div className="rounded-2xl bg-muted/60 p-3">
-
-                  <BookOpen className="mb-2 h-4 w-4 text-primary" />
-
-                  <p className="text-xs font-semibold">
-                    Revise
-                  </p>
-
-                  <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
-                    Create flashcards for quick revision.
-                  </p>
-
-                </div>
-
-              </div>
-
-              <div className="mt-4 flex items-center justify-between gap-3">
-
-                <p className="text-[11px] text-muted-foreground">
-                  Made for learning, revision & exams.
+              <div className="hidden text-left sm:block">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-primary">
+                  AI Study Assistant
                 </p>
 
-                <Link
-                  href="/chat"
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
-                >
-                  Try it
+                <p className="text-xs font-semibold">
+                  Why this app?
+                </p>
+              </div>
 
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+              <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+
+          </div>
+        )}
+
+      {/* =====================================================
+          WHY APP FULL
+      ===================================================== */}
+
+      {showWhyBubble &&
+        !minimizedWhyBubble && (
+          <div className="fixed bottom-3 left-3 z-[9990] w-[calc(100vw-1.5rem)] max-w-sm sm:bottom-6 sm:left-6">
+
+            <div className="relative overflow-hidden rounded-3xl border bg-background p-4 shadow-2xl sm:p-5">
+
+              <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary/20 blur-3xl" />
+
+              <div className="absolute right-3 top-3 flex items-center gap-1">
+
+                <button
+                  type="button"
+                  onClick={toggleWhyBubble}
+                  aria-label="Minimize"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+                >
+                  <Minimize2 className="h-4 w-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={closeWhyBubble}
+                  aria-label="Close"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+                >
+                  <X className="h-4 w-4" />
+                </button>
 
               </div>
 
+              <div className="relative">
+
+                <div className="flex items-start gap-3 pr-16">
+
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+
+                  <div className="min-w-0">
+
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-primary sm:text-xs">
+                      Why this app?
+                    </p>
+
+                    <h3 className="mt-1 text-sm font-bold leading-5 sm:text-base">
+                      Built for students who want to study smarter.
+                    </h3>
+
+                  </div>
+                </div>
+
+                <p className="mt-4 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
+                  AI Study Assistant turns your study material
+                  into something easier to understand, practice,
+                  and revise.
+                </p>
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+
+                  {[
+                    {
+                      icon: MessageCircle,
+                      title: "Ask anything",
+                      text: "Get explanations in simple language.",
+                    },
+                    {
+                      icon: FileText,
+                      title: "Study PDFs",
+                      text: "Ask questions directly from your notes.",
+                    },
+                    {
+                      icon: Brain,
+                      title: "Practice",
+                      text: "Generate quizzes to test yourself.",
+                    },
+                    {
+                      icon: BookOpen,
+                      title: "Revise",
+                      text: "Create flashcards for quick revision.",
+                    },
+                  ].map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <div
+                        key={item.title}
+                        className="rounded-2xl bg-muted/60 p-3"
+                      >
+                        <Icon className="mb-2 h-4 w-4 text-primary" />
+
+                        <p className="text-xs font-semibold">
+                          {item.title}
+                        </p>
+
+                        <p className="mt-1 text-[10px] leading-4 text-muted-foreground sm:text-[11px]">
+                          {item.text}
+                        </p>
+                      </div>
+                    );
+                  })}
+
+                </div>
+
+                <div className="mt-4 flex items-center gap-3">
+
+                  <p className="min-w-0 flex-1 text-[10px] leading-4 text-muted-foreground sm:text-[11px]">
+                    Made for learning, revision & exams.
+                  </p>
+
+                  <Link
+                    href="/chat"
+                    onClick={closeWhyBubble}
+                    className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground"
+                  >
+                    Try it
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+
+                </div>
+
+              </div>
             </div>
-
           </div>
+        )}
 
-        </div>
-
-      )}
-
-      {/* ================================================= */}
-      {/* DEVELOPER BUBBLE */}
-      {/* ================================================= */}
+      {/* =====================================================
+          DEVELOPER
+      ===================================================== */}
 
       <Link
         href="https://www.instagram.com/_imnine9_/"
-        className={`group fixed bottom-6 right-6 z-40 flex items-center gap-3 rounded-2xl border bg-background px-4 py-3 shadow-lg transition hover:-translate-y-1 hover:shadow-xl ${
-          showWhyBubble
-            ? "hidden lg:flex"
-            : "flex"
-        }`}
-        title="Developer"
         target="_blank"
         rel="noopener noreferrer"
+        title="Developer"
+        className="
+          group
+          fixed
+          bottom-3
+          right-3
+          z-[9989]
+          flex
+          items-center
+          gap-2.5
+          rounded-2xl
+          border
+          bg-background
+          px-3
+          py-2.5
+          shadow-xl
+          transition-all
+          hover:-translate-y-1
+          hover:shadow-2xl
+          sm:bottom-6
+          sm:right-6
+          sm:px-4
+          sm:py-3
+        "
       >
-
-        {/* DEVELOPER AVATAR */}
-
-        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10">
+        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 sm:h-10 sm:w-10">
 
           <img
             src="/developer-avatar.png"
             alt="Gyanam G."
-            className="h-full w-full object-cover transition group-hover:scale-105"
+            className="h-full w-full object-cover"
             onError={(event) => {
               event.currentTarget.style.display =
                 "none";
@@ -1215,7 +1557,7 @@ export default function DashboardPage() {
 
         <div className="hidden sm:block">
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[10px] text-muted-foreground">
             Built by
           </p>
 
@@ -1225,8 +1567,326 @@ export default function DashboardPage() {
 
         </div>
 
+        <ArrowRight className="hidden h-3.5 w-3.5 text-muted-foreground sm:block" />
       </Link>
 
-    </main>
+      {/* =====================================================
+          TEMPORARY APP INTRO BUBBLE
+      ===================================================== */}
+
+      {showIntroBubble && !introBubbleClosed && (
+        <div
+          className="
+            fixed
+            bottom-5
+            left-1/2
+            z-[9990]
+            w-[calc(100vw-1.5rem)]
+            max-w-md
+            -translate-x-1/2
+            animate-in
+            fade-in
+            slide-in-from-bottom-5
+            duration-500
+            sm:bottom-7
+            sm:left-7
+            sm:translate-x-0
+          "
+        >
+          <div
+            className="
+              relative
+              overflow-hidden
+              rounded-3xl
+              border
+              border-primary/20
+              bg-background/95
+              p-4
+              shadow-2xl
+              backdrop-blur-xl
+              sm:p-5
+            "
+          >
+
+            <div
+              className="
+                pointer-events-none
+                absolute
+                -right-16
+                -top-16
+                h-40
+                w-40
+                rounded-full
+                bg-primary/20
+                blur-3xl
+              "
+            />
+
+            <div
+              className="
+                pointer-events-none
+                absolute
+                -bottom-20
+                -left-16
+                h-36
+                w-36
+                rounded-full
+                bg-primary/10
+                blur-3xl
+              "
+            />
+
+            <button
+              type="button"
+              onClick={closeIntroBubble}
+              aria-label="Close introduction"
+              className="
+                absolute
+                right-3
+                top-3
+                z-10
+                flex
+                h-8
+                w-8
+                items-center
+                justify-center
+                rounded-full
+                text-muted-foreground
+                transition
+                hover:bg-muted
+                hover:text-foreground
+              "
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="relative">
+
+              <div className="flex items-start gap-3 pr-8">
+
+                <div
+                  className="
+                    relative
+                    flex
+                    h-12
+                    w-12
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-2xl
+                    bg-primary/10
+                    ring-1
+                    ring-primary/20
+                  "
+                >
+                  <Sparkles
+                    className="
+                      h-5
+                      w-5
+                      animate-pulse
+                      text-primary
+                    "
+                  />
+
+                  <span
+                    className="
+                      absolute
+                      -right-1
+                      -top-1
+                      h-2.5
+                      w-2.5
+                      rounded-full
+                      bg-primary
+                      shadow-[0_0_12px_hsl(var(--primary))]
+                    "
+                  />
+                </div>
+
+                <div className="min-w-0">
+
+                  <div className="flex items-center gap-2">
+
+                    <span
+                      className="
+                        rounded-full
+                        bg-primary/10
+                        px-2
+                        py-1
+                        text-[9px]
+                        font-bold
+                        uppercase
+                        tracking-wider
+                        text-primary
+                      "
+                    >
+                      New
+                    </span>
+
+                    <span className="text-[10px] text-muted-foreground">
+                      AI Study Assistant
+                    </span>
+
+                  </div>
+
+                  <h3 className="mt-1 text-base font-bold leading-5 sm:text-lg">
+                    Your smarter way to study ✨
+                  </h3>
+
+                </div>
+              </div>
+
+              <p className="mt-4 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
+                Turn your questions, notes, and PDFs into
+                interactive learning. Ask AI, get simple
+                explanations, practice with quizzes, and
+                revise with flashcards — all in one place.
+              </p>
+
+              <div className="mt-4 grid grid-cols-3 gap-2">
+
+                <div className="rounded-2xl border bg-muted/40 p-2.5 text-center">
+
+                  <MessageCircle className="mx-auto h-4 w-4 text-primary" />
+
+                  <p className="mt-1 text-[10px] font-semibold">
+                    Ask AI
+                  </p>
+
+                  <p className="mt-0.5 text-[9px] text-muted-foreground">
+                    Learn anything
+                  </p>
+
+                </div>
+
+                <div className="rounded-2xl border bg-muted/40 p-2.5 text-center">
+
+                  <Brain className="mx-auto h-4 w-4 text-primary" />
+
+                  <p className="mt-1 text-[10px] font-semibold">
+                    Practice
+                  </p>
+
+                  <p className="mt-0.5 text-[9px] text-muted-foreground">
+                    AI quizzes
+                  </p>
+
+                </div>
+
+                <div className="rounded-2xl border bg-muted/40 p-2.5 text-center">
+
+                  <BookOpen className="mx-auto h-4 w-4 text-primary" />
+
+                  <p className="mt-1 text-[10px] font-semibold">
+                    Revise
+                  </p>
+
+                  <p className="mt-0.5 text-[9px] text-muted-foreground">
+                    Flashcards
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div className="mt-4 flex items-center gap-3">
+
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+
+                  <div className="flex -space-x-1">
+
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-primary/10">
+                      <Sparkles className="h-3 w-3 text-primary" />
+                    </div>
+
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-primary/20">
+                      <Brain className="h-3 w-3 text-primary" />
+                    </div>
+
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-primary/30">
+                      <BookOpen className="h-3 w-3 text-primary" />
+                    </div>
+
+                  </div>
+
+                  <span className="truncate text-[10px] text-muted-foreground">
+                    Built for students & exams
+                  </span>
+
+                </div>
+
+                <Link
+                  href="/chat"
+                  onClick={closeIntroBubble}
+                  className="
+                    inline-flex
+                    min-h-9
+                    shrink-0
+                    items-center
+                    gap-1.5
+                    rounded-xl
+                    bg-primary
+                    px-3.5
+                    py-2
+                    text-xs
+                    font-semibold
+                    text-primary-foreground
+                    shadow-sm
+                    transition
+                    hover:-translate-y-0.5
+                    hover:opacity-90
+                  "
+                >
+                  Try it
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================
+          SMALL REOPEN BUTTON
+      ===================================================== */}
+
+      {!showIntroBubble && introBubbleClosed && (
+        <button
+          type="button"
+          onClick={() => {
+            setIntroBubbleClosed(false);
+            setShowIntroBubble(true);
+          }}
+          className="
+            fixed
+            bottom-5
+            left-5
+            z-[9990]
+            flex
+            h-11
+            w-11
+            items-center
+            justify-center
+            rounded-2xl
+            border
+            bg-background/95
+            text-primary
+            shadow-xl
+            backdrop-blur-xl
+            transition
+            hover:-translate-y-1
+            hover:shadow-2xl
+            sm:bottom-7
+            sm:left-7
+          "
+          aria-label="About AI Study Assistant"
+          title="About AI Study Assistant"
+        >
+          <Sparkles className="h-5 w-5" />
+        </button>
+      )}
+
+    </div>
   );
 }

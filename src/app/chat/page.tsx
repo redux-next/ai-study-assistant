@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ChangeEvent,
   FormEvent,
+  KeyboardEvent,
   useEffect,
   useRef,
   useState,
@@ -15,18 +16,23 @@ import {
   BookOpen,
   Brain,
   Check,
+  CheckCircle2,
   ChevronDown,
+  Clipboard,
   FileText,
   GraduationCap,
   Loader2,
+  Menu,
   MessageCircle,
   Paperclip,
   Plus,
+  RefreshCw,
   Send,
   Sparkles,
   Trash2,
   Upload,
   X,
+  Zap,
 } from "lucide-react";
 
 import ReactMarkdown from "react-markdown";
@@ -80,16 +86,18 @@ type Flashcard = {
   answer: string;
 };
 
-/* =========================================================
-   TOOL MODES
-========================================================= */
-
-const toolModes: {
+type ToolModeInfo = {
   id: ToolMode;
   label: string;
   description: string;
   icon: typeof MessageCircle;
-}[] = [
+};
+
+/* =========================================================
+   TOOL MODES
+========================================================= */
+
+const toolModes: ToolModeInfo[] = [
   {
     id: "chat",
     label: "Chat",
@@ -105,13 +113,13 @@ const toolModes: {
   {
     id: "explain",
     label: "Explain",
-    description: "Understand a topic",
+    description: "Understand difficult topics",
     icon: GraduationCap,
   },
   {
     id: "quiz",
     label: "Quiz",
-    description: "Test yourself",
+    description: "Test your knowledge",
     icon: Brain,
   },
   {
@@ -120,6 +128,17 @@ const toolModes: {
     description: "Revise quickly",
     icon: BookOpen,
   },
+];
+
+/* =========================================================
+   SUGGESTED QUESTIONS
+========================================================= */
+
+const suggestedQuestions = [
+  "Explain Newton's second law in simple words.",
+  "Solve x² + 5x + 6 = 0 step by step.",
+  "Explain this topic like I'm preparing for an exam.",
+  "Give me the most important points to remember.",
 ];
 
 /* =========================================================
@@ -172,7 +191,7 @@ const markdownComponents = {
   }: {
     children?: React.ReactNode;
   }) => (
-    <p className="mb-3 last:mb-0 leading-7">
+    <p className="mb-3 leading-7 last:mb-0">
       {children}
     </p>
   ),
@@ -212,7 +231,7 @@ const markdownComponents = {
   }: {
     children?: React.ReactNode;
   }) => (
-    <blockquote className="my-4 border-l-4 border-primary/40 bg-muted/40 px-4 py-3 italic">
+    <blockquote className="my-4 rounded-r-xl border-l-4 border-primary/40 bg-muted/40 px-4 py-3 italic">
       {children}
     </blockquote>
   ),
@@ -313,7 +332,7 @@ const markdownComponents = {
   }: {
     children?: React.ReactNode;
   }) => (
-    <tr className="hover:bg-muted/40">
+    <tr className="transition hover:bg-muted/40">
       {children}
     </tr>
   ),
@@ -367,7 +386,7 @@ const markdownComponents = {
 };
 
 /* =========================================================
-   MARKDOWN RENDERER
+   MARKDOWN
 ========================================================= */
 
 function MarkdownContent({
@@ -401,7 +420,7 @@ function MarkdownContent({
 
 export default function ChatPage() {
   /* -------------------------------------------------------
-     CHAT STATE
+     CHAT
   ------------------------------------------------------- */
 
   const [messages, setMessages] =
@@ -414,7 +433,7 @@ export default function ChatPage() {
     useState<string | null>(null);
 
   /* -------------------------------------------------------
-     INPUT / LOADING
+     INPUT
   ------------------------------------------------------- */
 
   const [input, setInput] =
@@ -443,7 +462,7 @@ export default function ChatPage() {
     useState("");
 
   /* -------------------------------------------------------
-     TOOL MODE
+     TOOLS
   ------------------------------------------------------- */
 
   const [toolMode, setToolMode] =
@@ -453,7 +472,7 @@ export default function ChatPage() {
     useState(false);
 
   const [showChats, setShowChats] =
-    useState(true);
+    useState(false);
 
   /* -------------------------------------------------------
      ERROR
@@ -461,6 +480,13 @@ export default function ChatPage() {
 
   const [error, setError] =
     useState("");
+
+  /* -------------------------------------------------------
+     COPYING
+  ------------------------------------------------------- */
+
+  const [copiedMessage, setCopiedMessage] =
+    useState<number | null>(null);
 
   /* -------------------------------------------------------
      QUIZ
@@ -510,6 +536,16 @@ export default function ChatPage() {
       null
     );
 
+  const textareaRef =
+    useRef<HTMLTextAreaElement | null>(
+      null
+    );
+
+  const toolsRef =
+    useRef<HTMLDivElement | null>(
+      null
+    );
+
   /* =========================================================
      INITIAL LOAD
   ========================================================= */
@@ -519,7 +555,7 @@ export default function ChatPage() {
   }, []);
 
   /* =========================================================
-     READ URL PARAMETERS
+     URL PARAMETERS
   ========================================================= */
 
   useEffect(() => {
@@ -555,10 +591,96 @@ export default function ChatPage() {
         behavior: "smooth",
       }
     );
-  }, [messages, loading]);
+  }, [
+    messages,
+    loading,
+    quizData,
+    flashcards,
+  ]);
 
   /* =========================================================
-     LOAD RECENT CHATS
+     OUTSIDE CLICK
+  ========================================================= */
+
+  useEffect(() => {
+    function handleClick(
+      event: MouseEvent
+    ) {
+      if (
+        toolsRef.current &&
+        !toolsRef.current.contains(
+          event.target as Node
+        )
+      ) {
+        setShowTools(false);
+      }
+    }
+
+    document.addEventListener(
+      "mousedown",
+      handleClick
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClick
+      );
+    };
+  }, []);
+
+  /* =========================================================
+     ESCAPE KEY
+  ========================================================= */
+
+  useEffect(() => {
+    function handleEscape(
+      event: globalThis.KeyboardEvent
+    ) {
+      if (
+        event.key === "Escape"
+      ) {
+        setShowTools(false);
+        setShowChats(false);
+      }
+    }
+
+    document.addEventListener(
+      "keydown",
+      handleEscape
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
+    };
+  }, []);
+
+  /* =========================================================
+     AUTO RESIZE TEXTAREA
+  ========================================================= */
+
+  useEffect(() => {
+    const textarea =
+      textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "auto";
+
+    textarea.style.height =
+      `${Math.min(
+        textarea.scrollHeight,
+        160
+      )}px`;
+  }, [input]);
+
+  /* =========================================================
+     LOAD CHATS
   ========================================================= */
 
   async function loadRecentChats() {
@@ -587,18 +709,14 @@ export default function ChatPage() {
         data.data ||
         [];
 
-      if (
+      setRecentChats(
         Array.isArray(chats)
-      ) {
-        setRecentChats(
-          chats
-        );
-      } else {
-        setRecentChats([]);
-      }
+          ? chats
+          : []
+      );
     } catch (error) {
       console.error(
-        "Failed to load recent chats:",
+        "Failed to load chats:",
         error
       );
 
@@ -609,7 +727,7 @@ export default function ChatPage() {
   }
 
   /* =========================================================
-     LOAD SINGLE CHAT
+     LOAD CHAT
   ========================================================= */
 
   async function loadChat(
@@ -618,6 +736,7 @@ export default function ChatPage() {
     try {
       setError("");
       setLoadingChat(true);
+      setShowChats(false);
 
       const response =
         await fetch(
@@ -663,16 +782,13 @@ export default function ChatPage() {
               ) => ({
                 id:
                   message.id,
-
                 role:
                   message.role ===
                   "user"
                     ? "user"
                     : "assistant",
-
                 content:
                   message.content,
-
                 createdAt:
                   message.createdAt,
               })
@@ -715,25 +831,20 @@ export default function ChatPage() {
   }
 
   /* =========================================================
-     START NEW CHAT
+     NEW CHAT
   ========================================================= */
 
   function startNewChat() {
-    setCurrentChatId(
-      null
-    );
-
+    setCurrentChatId(null);
     setMessages([]);
-
     setInput("");
-
     setDocumentId(null);
-
     setDocumentName("");
-
     setToolMode("chat");
-
+    setError("");
     resetToolState();
+
+    setShowChats(false);
 
     const url =
       new URL(
@@ -764,7 +875,7 @@ export default function ChatPage() {
   ) {
     const confirmed =
       window.confirm(
-        "Delete this chat?"
+        "Delete this chat permanently?"
       );
 
     if (!confirmed) {
@@ -824,27 +935,19 @@ export default function ChatPage() {
   }
 
   /* =========================================================
-     RESET QUIZ / FLASHCARD STATE
+     RESET TOOLS
   ========================================================= */
 
   function resetToolState() {
     setQuizData(null);
-
     setQuizIndex(0);
-
     setQuizScore(0);
-
     setSelectedAnswer(null);
-
     setQuizFinished(false);
 
     setFlashcards([]);
-
     setFlashcardIndex(0);
-
-    setShowFlashcardAnswer(
-      false
-    );
+    setShowFlashcardAnswer(false);
   }
 
   /* =========================================================
@@ -855,9 +958,7 @@ export default function ChatPage() {
     mode: ToolMode
   ) {
     setToolMode(mode);
-
     setShowTools(false);
-
     resetToolState();
 
     if (mode === "chat") {
@@ -866,8 +967,7 @@ export default function ChatPage() {
     }
 
     if (
-      mode ===
-      "summarize"
+      mode === "summarize"
     ) {
       setInput(
         "Please summarize the uploaded document."
@@ -885,24 +985,19 @@ export default function ChatPage() {
     }
 
     if (mode === "quiz") {
-      setInput(
-        "Create a quiz from the uploaded document."
-      );
+      setInput("");
       return;
     }
 
     if (
-      mode ===
-      "flashcards"
+      mode === "flashcards"
     ) {
-      setInput(
-        "Create flashcards from the uploaded document."
-      );
+      setInput("");
     }
   }
 
   /* =========================================================
-     HANDLE PDF UPLOAD
+     UPLOAD PDF
   ========================================================= */
 
   async function handleFileChange(
@@ -915,13 +1010,14 @@ export default function ChatPage() {
       return;
     }
 
-    if (
-      file.type !==
-        "application/pdf" &&
-      !file.name
+    const isPdf =
+      file.type ===
+        "application/pdf" ||
+      file.name
         .toLowerCase()
-        .endsWith(".pdf")
-    ) {
+        .endsWith(".pdf");
+
+    if (!isPdf) {
       setError(
         "Please upload a PDF file only."
       );
@@ -937,7 +1033,6 @@ export default function ChatPage() {
     }
 
     setError("");
-
     setUploading(true);
 
     try {
@@ -1000,7 +1095,7 @@ export default function ChatPage() {
           ...previous,
           {
             role: "assistant",
-            content: `📄 **${file.name}** uploaded successfully.\n\nProcessing your document now...`,
+            content: `📄 **${file.name}** uploaded successfully.\n\n⏳ I'm processing your document...`,
           },
         ]
       );
@@ -1031,10 +1126,12 @@ export default function ChatPage() {
           {
             role: "assistant",
             content:
-              "✅ **Your PDF has been processed successfully.** You can now ask questions about it.\n\nYou can also ask mathematical questions such as:\n\n$$E = mc^2$$\n\nor\n\n$$F = ma$$",
+              "✅ **PDF processed successfully!**\n\nYou can now ask me questions about the document, request a summary, create a quiz, or generate flashcards.",
           },
         ]
       );
+
+      setToolMode("chat");
 
       const url =
         new URL(
@@ -1088,19 +1185,21 @@ export default function ChatPage() {
 
     if (
       !question ||
-      loading
+      loading ||
+      uploading
     ) {
       return;
     }
 
     setError("");
-
     setInput("");
 
     const userMessage: Message =
       {
         role: "user",
         content: question,
+        createdAt:
+          new Date().toISOString(),
       };
 
     setMessages(
@@ -1118,19 +1217,14 @@ export default function ChatPage() {
           "/api/chat",
           {
             method: "POST",
-
             headers: {
               "Content-Type":
                 "application/json",
             },
-
             body: JSON.stringify({
               question,
-
               documentId,
-
               mode: toolMode,
-
               chatId:
                 currentChatId,
             }),
@@ -1187,6 +1281,8 @@ export default function ChatPage() {
           {
             role: "assistant",
             content: answer,
+            createdAt:
+              new Date().toISOString(),
           },
         ]
       );
@@ -1202,11 +1298,8 @@ export default function ChatPage() {
         );
 
         setQuizIndex(0);
-
         setQuizScore(0);
-
         setQuizFinished(false);
-
         setSelectedAnswer(null);
       }
 
@@ -1219,9 +1312,7 @@ export default function ChatPage() {
           data.flashcards
         );
 
-        setFlashcardIndex(
-          0
-        );
+        setFlashcardIndex(0);
 
         setShowFlashcardAnswer(
           false
@@ -1244,6 +1335,59 @@ export default function ChatPage() {
   }
 
   /* =========================================================
+     RETRY
+  ========================================================= */
+
+  function retryLastMessage() {
+    const lastUserMessage =
+      [...messages]
+        .reverse()
+        .find(
+          (message) =>
+            message.role ===
+            "user"
+        );
+
+    if (!lastUserMessage) {
+      return;
+    }
+
+    setInput(
+      lastUserMessage.content
+    );
+
+    textareaRef.current?.focus();
+  }
+
+  /* =========================================================
+     COPY MESSAGE
+  ========================================================= */
+
+  async function copyMessage(
+    content: string,
+    index: number
+  ) {
+    try {
+      await navigator.clipboard.writeText(
+        content
+      );
+
+      setCopiedMessage(index);
+
+      window.setTimeout(() => {
+        setCopiedMessage(
+          null
+        );
+      }, 1500);
+    } catch (error) {
+      console.error(
+        "COPY ERROR:",
+        error
+      );
+    }
+  }
+
+  /* =========================================================
      GENERATE QUIZ
   ========================================================= */
 
@@ -1252,8 +1396,14 @@ export default function ChatPage() {
       return;
     }
 
-    setError("");
+    if (!documentId) {
+      setError(
+        "Upload a PDF before generating a quiz."
+      );
+      return;
+    }
 
+    setError("");
     setLoading(true);
 
     try {
@@ -1262,22 +1412,17 @@ export default function ChatPage() {
           "/api/quiz",
           {
             method: "POST",
-
             headers: {
               "Content-Type":
                 "application/json",
             },
-
             body: JSON.stringify({
               documentId,
-
               topic:
                 documentName ||
                 "General",
-
               difficulty:
                 "medium",
-
               numberOfQuestions: 10,
             }),
           }
@@ -1310,13 +1455,9 @@ export default function ChatPage() {
       }
 
       setQuizData(quiz);
-
       setQuizIndex(0);
-
       setQuizScore(0);
-
       setSelectedAnswer(null);
-
       setQuizFinished(false);
     } catch (error) {
       console.error(
@@ -1376,7 +1517,7 @@ export default function ChatPage() {
   }
 
   /* =========================================================
-     NEXT QUIZ QUESTION
+     NEXT QUESTION
   ========================================================= */
 
   function nextQuizQuestion() {
@@ -1413,20 +1554,13 @@ export default function ChatPage() {
 
   function resetQuiz() {
     setQuizIndex(0);
-
     setQuizScore(0);
-
-    setSelectedAnswer(
-      null
-    );
-
-    setQuizFinished(
-      false
-    );
+    setSelectedAnswer(null);
+    setQuizFinished(false);
   }
 
   /* =========================================================
-     FLASHCARD NAVIGATION
+     FLASHCARDS
   ========================================================= */
 
   function nextFlashcard() {
@@ -1468,9 +1602,7 @@ export default function ChatPage() {
 
   function removeDocument() {
     setDocumentId(null);
-
     setDocumentName("");
-
     resetToolState();
 
     setMessages(
@@ -1528,6 +1660,49 @@ export default function ChatPage() {
   }
 
   /* =========================================================
+     FORMAT TIME
+  ========================================================= */
+
+  function formatTime(
+    date?: string
+  ) {
+    if (!date) {
+      return "";
+    }
+
+    try {
+      return new Date(
+        date
+      ).toLocaleTimeString(
+        "en-IN",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      );
+    } catch {
+      return "";
+    }
+  }
+
+  /* =========================================================
+     KEYBOARD HANDLER
+  ========================================================= */
+
+  function handleTextareaKeyDown(
+    event: KeyboardEvent<HTMLTextAreaElement>
+  ) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+
+      sendMessage();
+    }
+  }
+
+  /* =========================================================
      CURRENT TOOL
   ========================================================= */
 
@@ -1570,18 +1745,22 @@ export default function ChatPage() {
       ===================================================== */}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r bg-background transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r bg-background shadow-xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:shadow-none ${
           showChats
             ? "translate-x-0"
             : "-translate-x-full"
         }`}
       >
+        {/* SIDEBAR HEADER */}
+
         <div className="flex h-16 items-center justify-between border-b px-4">
           <Link
             href="/dashboard"
             className="flex items-center gap-2 font-semibold"
           >
-            <Brain className="h-5 w-5 text-primary" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Brain className="h-5 w-5 text-primary" />
+            </div>
 
             StudyAI
           </Link>
@@ -1592,10 +1771,13 @@ export default function ChatPage() {
               setShowChats(false)
             }
             className="rounded-lg p-2 hover:bg-muted lg:hidden"
+            aria-label="Close sidebar"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {/* NEW CHAT */}
 
         <div className="p-3">
           <button
@@ -1603,7 +1785,7 @@ export default function ChatPage() {
             onClick={
               startNewChat
             }
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
 
@@ -1611,28 +1793,32 @@ export default function ChatPage() {
           </button>
         </div>
 
+        {/* RECENT */}
+
         <div className="px-4 pb-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Recent chats
           </p>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-2">
+        <div className="flex-1 overflow-y-auto px-2 pb-4">
           {loadingChats ? (
             <div className="flex items-center justify-center p-6">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : recentChats.length ===
             0 ? (
-            <div className="px-3 py-8 text-center">
-              <MessageCircle className="mx-auto h-7 w-7 text-muted-foreground" />
+            <div className="px-3 py-10 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+                <MessageCircle className="h-6 w-6 text-muted-foreground" />
+              </div>
 
               <p className="mt-3 text-sm font-medium">
                 No chats yet
               </p>
 
               <p className="mt-1 text-xs text-muted-foreground">
-                Start a conversation.
+                Start your first conversation.
               </p>
             </div>
           ) : (
@@ -1679,7 +1865,7 @@ export default function ChatPage() {
                           chat.id
                         )
                       }
-                      className="mr-1 rounded-lg p-2 text-muted-foreground opacity-0 transition hover:bg-background hover:text-red-500 group-hover:opacity-100"
+                      className="mr-1 rounded-lg p-2 text-muted-foreground opacity-0 transition hover:bg-background hover:text-red-500 group-hover:opacity-100 focus:opacity-100"
                       title="Delete chat"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -1692,9 +1878,7 @@ export default function ChatPage() {
         </div>
       </aside>
 
-      {/* =====================================================
-          MOBILE OVERLAY
-      ===================================================== */}
+      {/* MOBILE OVERLAY */}
 
       {showChats && (
         <button
@@ -1703,32 +1887,35 @@ export default function ChatPage() {
           onClick={() =>
             setShowChats(false)
           }
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
         />
       )}
 
       {/* =====================================================
-          MAIN CONTENT
+          MAIN
       ===================================================== */}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* HEADER */}
+        {/* ===================================================
+            HEADER
+        =================================================== */}
 
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b bg-background/95 px-4 backdrop-blur">
-          <div className="flex min-w-0 items-center gap-3">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b bg-background/90 px-3 backdrop-blur-md sm:px-4">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() =>
                 setShowChats(true)
               }
-              className="rounded-xl border p-2 lg:hidden"
+              className="rounded-xl border p-2 hover:bg-muted lg:hidden"
+              aria-label="Open chats"
             >
-              <MessageCircle className="h-4 w-4" />
+              <Menu className="h-4 w-4" />
             </button>
 
             <Link
               href="/dashboard"
-              className="hidden items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium hover:bg-muted sm:flex"
+              className="hidden items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition hover:bg-muted sm:flex"
             >
               <ArrowLeft className="h-4 w-4" />
 
@@ -1753,9 +1940,17 @@ export default function ChatPage() {
                   : "New Chat"}
               </h1>
 
-              {documentName && (
-                <p className="truncate text-xs text-muted-foreground">
-                  {documentName}
+              {documentName ? (
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <CheckCircle2 className="h-3 w-3 shrink-0 text-green-500" />
+
+                  <p className="truncate text-xs text-muted-foreground">
+                    {documentName}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  AI Study Assistant
                 </p>
               )}
             </div>
@@ -1764,11 +1959,18 @@ export default function ChatPage() {
           <UserMenu />
         </header>
 
-        {/* TOOLBAR */}
+        {/* ===================================================
+            TOOLBAR
+        =================================================== */}
 
-        <div className="border-b px-4 py-3">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-            <div className="relative">
+        <div className="border-b bg-background/80 px-3 py-3 sm:px-4">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
+            {/* TOOL SELECTOR */}
+
+            <div
+              ref={toolsRef}
+              className="relative"
+            >
               <button
                 type="button"
                 onClick={() =>
@@ -1777,18 +1979,20 @@ export default function ChatPage() {
                       !value
                   )
                 }
-                className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium hover:bg-muted"
+                className="flex items-center gap-2 rounded-xl border bg-card px-3 py-2 text-sm font-medium shadow-sm transition hover:bg-muted"
               >
-                <CurrentToolIcon className="h-4 w-4" />
+                <CurrentToolIcon className="h-4 w-4 text-primary" />
 
-                {currentTool?.label ||
-                  "Chat"}
+                <span>
+                  {currentTool?.label ||
+                    "Chat"}
+                </span>
 
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </button>
 
               {showTools && (
-                <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl border bg-background p-2 shadow-xl">
+                <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-2xl border bg-background p-2 shadow-2xl">
                   {toolModes.map(
                     (tool) => {
                       const Icon =
@@ -1805,23 +2009,25 @@ export default function ChatPage() {
                               tool.id
                             )
                           }
-                          className={`flex w-full items-start gap-3 rounded-xl p-3 text-left hover:bg-muted ${
+                          className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition hover:bg-muted ${
                             toolMode ===
                             tool.id
-                              ? "bg-muted"
+                              ? "bg-primary/10"
                               : ""
                           }`}
                         >
-                          <Icon className="h-5 w-5" />
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                            <Icon className="h-4 w-4" />
+                          </div>
 
-                          <div>
+                          <div className="min-w-0">
                             <p className="text-sm font-medium">
                               {
                                 tool.label
                               }
                             </p>
 
-                            <p className="text-xs text-muted-foreground">
+                            <p className="truncate text-xs text-muted-foreground">
                               {
                                 tool.description
                               }
@@ -1830,7 +2036,7 @@ export default function ChatPage() {
 
                           {toolMode ===
                             tool.id && (
-                            <Check className="ml-auto h-4 w-4" />
+                            <Check className="ml-auto h-4 w-4 text-primary" />
                           )}
                         </button>
                       );
@@ -1840,6 +2046,8 @@ export default function ChatPage() {
               )}
             </div>
 
+            {/* DOCUMENT BUTTONS */}
+
             <div className="flex items-center gap-2">
               {documentId && (
                 <button
@@ -1847,7 +2055,7 @@ export default function ChatPage() {
                   onClick={
                     removeDocument
                   }
-                  className="flex items-center gap-2 rounded-xl border px-3 py-2 text-xs hover:bg-muted"
+                  className="flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition hover:bg-muted"
                 >
                   <X className="h-4 w-4" />
 
@@ -1865,7 +2073,7 @@ export default function ChatPage() {
                 onClick={() =>
                   fileInputRef.current?.click()
                 }
-                className="flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {uploading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1895,31 +2103,61 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* ERROR */}
+        {/* ===================================================
+            ERROR
+        =================================================== */}
 
         {error && (
           <div className="mx-auto w-full max-w-5xl px-4 pt-4">
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">
-              {error}
+            <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">
+              <X className="mt-0.5 h-4 w-4 shrink-0" />
+
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">
+                  Something went wrong
+                </p>
+
+                <p className="mt-0.5">
+                  {error}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setError("")
+                }
+                className="rounded-lg p-1 hover:bg-red-500/10"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </div>
         )}
 
-        {/* CHAT AREA */}
+        {/* ===================================================
+            CHAT AREA
+        =================================================== */}
 
-        <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="flex-1 overflow-y-auto px-3 py-6 sm:px-4">
           <div className="mx-auto max-w-5xl space-y-6">
             {loadingChat ? (
-              <div className="flex min-h-[50vh] items-center justify-center">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-5 w-5 animate-spin" />
+              <div className="flex min-h-[55vh] items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
 
-                  Loading conversation...
+                  <p className="text-sm text-muted-foreground">
+                    Loading conversation...
+                  </p>
                 </div>
               </div>
             ) : (
               <>
-                {/* EMPTY */}
+                {/* =================================================
+                    EMPTY STATE
+                ================================================= */}
 
                 {messages.length ===
                   0 &&
@@ -1927,59 +2165,76 @@ export default function ChatPage() {
                   flashcards.length ===
                     0 && (
                     <div className="flex min-h-[55vh] flex-col items-center justify-center text-center">
-                      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+                      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
                         <Sparkles className="h-8 w-8 text-primary" />
                       </div>
 
-                      <h2 className="text-2xl font-bold">
+                      <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
                         What would you like to learn?
                       </h2>
 
-                      <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                        Ask anything about your studies or upload a PDF.
+                      <p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">
+                        Ask questions, solve problems,
+                        understand difficult topics, or
+                        upload a PDF and study with AI.
                       </p>
 
-                      <div className="mt-6 max-w-lg rounded-2xl border bg-card p-5 text-left">
-                        <p className="mb-3 text-sm font-semibold">
-                          ✨ You can ask things like:
-                        </p>
+                      {/* QUICK ACTIONS */}
 
-                        <div className="space-y-2 text-sm text-muted-foreground">
-                          <p>
-                            • Explain Newton&apos;s
-                            second law.
-                          </p>
+                      <div className="mt-7 grid w-full max-w-2xl gap-2 sm:grid-cols-2">
+                        {suggestedQuestions.map(
+                          (
+                            question
+                          ) => (
+                            <button
+                              key={
+                                question
+                              }
+                              type="button"
+                              onClick={() =>
+                                setInput(
+                                  question
+                                )
+                              }
+                              className="rounded-xl border bg-card p-3 text-left text-sm transition hover:border-primary/40 hover:bg-primary/5"
+                            >
+                              <span className="text-muted-foreground">
+                                {question}
+                              </span>
+                            </button>
+                          )
+                        )}
+                      </div>
 
-                          <p>
-                            • Solve:
-                            {" "}
-                            <span className="font-medium">
-                              x² + 5x + 6 = 0
-                            </span>
-                          </p>
+                      {/* FEATURES */}
 
-                          <p>
-                            • Explain
-                            {" "}
-                            <span className="font-medium">
-                              E = mc²
-                            </span>
-                          </p>
+                      <div className="mt-6 flex flex-wrap justify-center gap-2">
+                        <div className="flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground">
+                          <Zap className="h-3.5 w-3.5 text-primary" />
+                          AI explanations
+                        </div>
 
-                          <p>
-                            • What is
-                            {" "}
-                            <span className="font-medium">
-                              ∫ x² dx
-                            </span>
-                            ?
-                          </p>
+                        <div className="flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground">
+                          <FileText className="h-3.5 w-3.5 text-primary" />
+                          PDF analysis
+                        </div>
+
+                        <div className="flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground">
+                          <Brain className="h-3.5 w-3.5 text-primary" />
+                          Quizzes
+                        </div>
+
+                        <div className="flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground">
+                          <BookOpen className="h-3.5 w-3.5 text-primary" />
+                          Flashcards
                         </div>
                       </div>
                     </div>
                   )}
 
-                {/* MESSAGES */}
+                {/* =================================================
+                    MESSAGES
+                ================================================= */}
 
                 {messages.map(
                   (
@@ -1991,7 +2246,7 @@ export default function ChatPage() {
                         message.id ||
                         `${message.role}-${index}`
                       }
-                      className={`flex ${
+                      className={`group flex ${
                         message.role ===
                         "user"
                           ? "justify-end"
@@ -1999,38 +2254,99 @@ export default function ChatPage() {
                       }`}
                     >
                       <div
-                        className={`max-w-[92%] rounded-2xl px-4 py-3 sm:max-w-[82%] ${
+                        className={`flex max-w-[96%] flex-col gap-1 sm:max-w-[85%] ${
                           message.role ===
                           "user"
-                            ? "bg-primary text-primary-foreground"
-                            : "border bg-card"
+                            ? "items-end"
+                            : "items-start"
                         }`}
                       >
-                        {message.role ===
-                        "assistant" ? (
-                          <MarkdownContent
-                            content={
-                              message.content
-                            }
-                          />
-                        ) : (
-                          <p className="whitespace-pre-wrap text-sm leading-7">
-                            {
-                              message.content
-                            }
-                          </p>
-                        )}
+                        <div
+                          className={`rounded-2xl px-4 py-3 shadow-sm ${
+                            message.role ===
+                            "user"
+                              ? "rounded-br-md bg-primary text-primary-foreground"
+                              : "rounded-bl-md border bg-card"
+                          }`}
+                        >
+                          {message.role ===
+                          "assistant" ? (
+                            <MarkdownContent
+                              content={
+                                message.content
+                              }
+                            />
+                          ) : (
+                            <p className="whitespace-pre-wrap text-sm leading-7">
+                              {
+                                message.content
+                              }
+                            </p>
+                          )}
+                        </div>
+
+                        {/* MESSAGE ACTIONS */}
+
+                        <div
+                          className={`flex items-center gap-2 px-1 text-[10px] text-muted-foreground ${
+                            message.role ===
+                            "user"
+                              ? "justify-end"
+                              : "justify-start"
+                          }`}
+                        >
+                          {message.createdAt && (
+                            <span>
+                              {formatTime(
+                                message.createdAt
+                              )}
+                            </span>
+                          )}
+
+                          {message.role ===
+                            "assistant" && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                copyMessage(
+                                  message.content,
+                                  index
+                                )
+                              }
+                              className="flex items-center gap-1 rounded-md px-1.5 py-1 opacity-0 transition hover:bg-muted group-hover:opacity-100"
+                            >
+                              {copiedMessage ===
+                              index ? (
+                                <>
+                                  <Check className="h-3 w-3" />
+                                  Copied
+                                </>
+                              ) : (
+                                <>
+                                  <Clipboard className="h-3 w-3" />
+                                  Copy
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )
                 )}
 
-                {/* THINKING */}
+                {/* =================================================
+                    THINKING
+                ================================================= */}
 
                 {loading && (
                   <div className="flex justify-start">
-                    <div className="flex items-center gap-2 rounded-2xl border bg-card px-4 py-3">
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                    <div className="flex items-center gap-3 rounded-2xl rounded-bl-md border bg-card px-4 py-3 shadow-sm">
+                      <div className="flex gap-1">
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary" />
+                      </div>
 
                       <span className="text-sm text-muted-foreground">
                         Thinking...
@@ -2039,176 +2355,272 @@ export default function ChatPage() {
                   </div>
                 )}
 
-                {/* QUIZ START */}
+                {/* =================================================
+                    RETRY
+                ================================================= */}
+
+                {error &&
+                  !loading &&
+                  messages.some(
+                    (message) =>
+                      message.role ===
+                      "user"
+                  ) && (
+                    <div className="flex justify-start">
+                      <button
+                        type="button"
+                        onClick={
+                          retryLastMessage
+                        }
+                        className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-muted"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+
+                        Retry
+                      </button>
+                    </div>
+                  )}
+
+                {/* =================================================
+                    QUIZ READY
+                ================================================= */}
 
                 {toolMode ===
                   "quiz" &&
                   !quizData &&
                   documentId && (
-                    <div className="rounded-2xl border bg-card p-6">
-                      <div className="mb-4 flex items-center gap-3">
-                        <Brain className="h-6 w-6" />
+                    <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                      <div className="bg-primary/5 p-6">
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                            <Brain className="h-6 w-6 text-primary" />
+                          </div>
 
-                        <div>
-                          <h2 className="font-semibold">
-                            Ready for a quiz?
-                          </h2>
+                          <div>
+                            <h2 className="font-semibold">
+                              Ready for a quiz?
+                            </h2>
 
-                          <p className="text-sm text-muted-foreground">
-                            Test your knowledge from the uploaded document.
-                          </p>
+                            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                              I'll create 10 questions
+                              based on your uploaded
+                              document.
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                      <button
-                        type="button"
-                        disabled={
-                          loading
-                        }
-                        onClick={
-                          generateQuiz
-                        }
-                        className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-                      >
-                        {loading
-                          ? "Generating..."
-                          : "Generate Quiz"}
-                      </button>
+                        <button
+                          type="button"
+                          disabled={
+                            loading
+                          }
+                          onClick={
+                            generateQuiz
+                          }
+                          className="mt-5 flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                        >
+                          {loading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Brain className="h-4 w-4" />
+                          )}
+
+                          {loading
+                            ? "Generating..."
+                            : "Generate Quiz"}
+                        </button>
+                      </div>
                     </div>
                   )}
 
-                {/* QUIZ */}
+                {/* =================================================
+                    QUIZ
+                ================================================= */}
 
                 {quizData &&
                   currentQuizQuestion && (
-                    <div className="rounded-2xl border bg-card p-6">
+                    <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
                       {!quizFinished ? (
                         <>
-                          <div className="mb-6 flex items-center justify-between">
-                            <div>
-                              <p className="text-xs text-muted-foreground">
-                                Question{" "}
-                                {quizIndex +
-                                  1}{" "}
-                                of{" "}
-                                {
-                                  quizData
-                                    .questions
-                                    .length
-                                }
-                              </p>
-
-                              <h2 className="mt-1 font-semibold">
-                                {quizData.title ||
-                                  "Quiz"}
-                              </h2>
-                            </div>
-
-                            <div className="rounded-lg bg-primary/10 px-3 py-1 text-sm font-medium">
-                              Score:{" "}
-                              {
-                                quizScore
-                              }
-                            </div>
-                          </div>
-
-                          <div className="mb-5 text-lg font-medium leading-8">
-                            <MarkdownContent
-                              content={
-                                currentQuizQuestion.question
-                              }
-                            />
-                          </div>
-
-                          <div className="space-y-3">
-                            {currentQuizQuestion.options.map(
-                              (
-                                option
-                              ) => {
-                                const isSelected =
-                                  selectedAnswer ===
-                                  option;
-
-                                const isCorrect =
-                                  option
-                                    .trim()
-                                    .toLowerCase() ===
-                                  currentQuizQuestion.answer
-                                    .trim()
-                                    .toLowerCase();
-
-                                let className =
-                                  "w-full rounded-xl border p-4 text-left transition hover:bg-muted";
-
-                                if (
-                                  selectedAnswer
-                                ) {
-                                  if (
-                                    isCorrect
-                                  ) {
-                                    className =
-                                      "w-full rounded-xl border border-green-500 bg-green-500/10 p-4 text-left";
-                                  } else if (
-                                    isSelected
-                                  ) {
-                                    className =
-                                      "w-full rounded-xl border border-red-500 bg-red-500/10 p-4 text-left";
+                          <div className="border-b bg-muted/30 p-5">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground">
+                                  Question{" "}
+                                  {quizIndex +
+                                    1}{" "}
+                                  of{" "}
+                                  {
+                                    quizData
+                                      .questions
+                                      .length
                                   }
-                                }
+                                </p>
 
-                                return (
-                                  <button
-                                    key={
-                                      option
+                                <h2 className="mt-1 font-semibold">
+                                  {quizData.title ||
+                                    "Knowledge Quiz"}
+                                </h2>
+                              </div>
+
+                              <div className="rounded-xl bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
+                                {quizScore} pts
+                              </div>
+                            </div>
+
+                            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-primary transition-all"
+                                style={{
+                                  width: `${
+                                    ((quizIndex +
+                                      1) /
+                                      quizData
+                                        .questions
+                                        .length) *
+                                    100
+                                  }%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="p-5 sm:p-6">
+                            <div className="mb-6 text-base font-medium leading-8 sm:text-lg">
+                              <MarkdownContent
+                                content={
+                                  currentQuizQuestion.question
+                                }
+                              />
+                            </div>
+
+                            <div className="space-y-3">
+                              {currentQuizQuestion.options.map(
+                                (
+                                  option,
+                                  optionIndex
+                                ) => {
+                                  const isSelected =
+                                    selectedAnswer ===
+                                    option;
+
+                                  const isCorrect =
+                                    option
+                                      .trim()
+                                      .toLowerCase() ===
+                                    currentQuizQuestion.answer
+                                      .trim()
+                                      .toLowerCase();
+
+                                  let className =
+                                    "w-full rounded-xl border p-4 text-left transition hover:border-primary/50 hover:bg-primary/5";
+
+                                  if (
+                                    selectedAnswer
+                                  ) {
+                                    if (
+                                      isCorrect
+                                    ) {
+                                      className =
+                                        "w-full rounded-xl border border-green-500 bg-green-500/10 p-4 text-left";
+                                    } else if (
+                                      isSelected
+                                    ) {
+                                      className =
+                                        "w-full rounded-xl border border-red-500 bg-red-500/10 p-4 text-left";
+                                    } else {
+                                      className =
+                                        "w-full rounded-xl border p-4 text-left opacity-60";
                                     }
-                                    type="button"
-                                    disabled={
-                                      selectedAnswer !==
-                                      null
-                                    }
-                                    onClick={() =>
-                                      answerQuiz(
-                                        option
-                                      )
-                                    }
-                                    className={
-                                      className
-                                    }
-                                  >
-                                    <MarkdownContent
-                                      content={
-                                        option
+                                  }
+
+                                  return (
+                                    <button
+                                      key={`${option}-${optionIndex}`}
+                                      type="button"
+                                      disabled={
+                                        selectedAnswer !==
+                                        null
                                       }
-                                    />
-                                  </button>
-                                );
-                              }
+                                      onClick={() =>
+                                        answerQuiz(
+                                          option
+                                        )
+                                      }
+                                      className={
+                                        className
+                                      }
+                                    >
+                                      <div className="flex gap-3">
+                                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-semibold">
+                                          {String.fromCharCode(
+                                            65 +
+                                              optionIndex
+                                          )}
+                                        </div>
+
+                                        <div className="min-w-0 flex-1">
+                                          <MarkdownContent
+                                            content={
+                                              option
+                                            }
+                                          />
+                                        </div>
+
+                                        {selectedAnswer &&
+                                          isCorrect && (
+                                            <Check className="h-5 w-5 shrink-0 text-green-500" />
+                                          )}
+                                      </div>
+                                    </button>
+                                  );
+                                }
+                              )}
+                            </div>
+
+                            {/* EXPLANATION */}
+
+                            {selectedAnswer &&
+                              currentQuizQuestion.explanation && (
+                                <div className="mt-5 rounded-xl bg-muted/50 p-4">
+                                  <p className="mb-2 text-sm font-semibold">
+                                    Explanation
+                                  </p>
+
+                                  <MarkdownContent
+                                    content={
+                                      currentQuizQuestion.explanation
+                                    }
+                                  />
+                                </div>
+                              )}
+
+                            {selectedAnswer && (
+                              <button
+                                type="button"
+                                onClick={
+                                  nextQuizQuestion
+                                }
+                                className="mt-5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                              >
+                                {quizIndex <
+                                quizData
+                                  .questions
+                                  .length -
+                                  1
+                                  ? "Next Question"
+                                  : "Finish Quiz"}
+                              </button>
                             )}
                           </div>
-
-                          {selectedAnswer && (
-                            <button
-                              type="button"
-                              onClick={
-                                nextQuizQuestion
-                              }
-                              className="mt-5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-                            >
-                              {quizIndex <
-                              quizData
-                                .questions
-                                .length -
-                                1
-                                ? "Next Question"
-                                : "Finish Quiz"}
-                            </button>
-                          )}
                         </>
                       ) : (
-                        <div className="text-center">
-                          <Check className="mx-auto h-10 w-10 text-primary" />
+                        <div className="p-8 text-center">
+                          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                            <Check className="h-8 w-8 text-primary" />
+                          </div>
 
-                          <h2 className="mt-3 text-2xl font-bold">
+                          <h2 className="mt-5 text-2xl font-bold">
                             Quiz Complete!
                           </h2>
 
@@ -2227,12 +2639,40 @@ export default function ChatPage() {
                             }
                           </p>
 
+                          <div className="mx-auto mt-5 max-w-xs">
+                            <div className="h-3 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-primary"
+                                style={{
+                                  width: `${
+                                    (quizScore /
+                                      quizData
+                                        .questions
+                                        .length) *
+                                    100
+                                  }%`,
+                                }}
+                              />
+                            </div>
+
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              {Math.round(
+                                (quizScore /
+                                  quizData
+                                    .questions
+                                    .length) *
+                                  100
+                              )}
+                              % score
+                            </p>
+                          </div>
+
                           <button
                             type="button"
                             onClick={
                               resetQuiz
                             }
-                            className="mt-6 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+                            className="mt-6 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
                           >
                             Try Again
                           </button>
@@ -2241,7 +2681,9 @@ export default function ChatPage() {
                     </div>
                   )}
 
-                {/* FLASHCARDS */}
+                {/* =================================================
+                    FLASHCARDS
+                ================================================= */}
 
                 {flashcards.length >
                   0 &&
@@ -2257,19 +2699,26 @@ export default function ChatPage() {
                               !value
                           )
                         }
-                        className="min-h-[280px] w-full rounded-3xl border bg-card p-8 text-center shadow-sm transition hover:shadow-md"
+                        className="group min-h-[320px] w-full rounded-3xl border bg-card p-8 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
                       >
-                        <p className="mb-6 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                          Flashcard{" "}
-                          {flashcardIndex +
-                            1}{" "}
-                          /{" "}
-                          {
-                            flashcards.length
-                          }
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                            {showFlashcardAnswer
+                              ? "ANSWER"
+                              : "QUESTION"}
+                          </span>
 
-                        <div className="mx-auto max-w-none">
+                          <span className="text-xs font-medium text-muted-foreground">
+                            {flashcardIndex +
+                              1}{" "}
+                            /{" "}
+                            {
+                              flashcards.length
+                            }
+                          </span>
+                        </div>
+
+                        <div className="flex min-h-[230px] items-center justify-center py-8">
                           <MarkdownContent
                             content={
                               showFlashcardAnswer
@@ -2279,7 +2728,7 @@ export default function ChatPage() {
                           />
                         </div>
 
-                        <p className="mt-8 text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground">
                           Click to{" "}
                           {showFlashcardAnswer
                             ? "see question"
@@ -2287,7 +2736,7 @@ export default function ChatPage() {
                         </p>
                       </button>
 
-                      <div className="mt-4 flex justify-between">
+                      <div className="mt-4 flex items-center justify-between">
                         <button
                           type="button"
                           disabled={
@@ -2297,10 +2746,20 @@ export default function ChatPage() {
                           onClick={
                             previousFlashcard
                           }
-                          className="rounded-xl border px-4 py-2 text-sm disabled:opacity-40"
+                          className="rounded-xl border px-4 py-2 text-sm font-medium transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Previous
                         </button>
+
+                        <div className="text-xs text-muted-foreground">
+                          {Math.round(
+                            ((flashcardIndex +
+                              1) /
+                              flashcards.length) *
+                              100
+                          )}
+                          % complete
+                        </div>
 
                         <button
                           type="button"
@@ -2312,7 +2771,7 @@ export default function ChatPage() {
                           onClick={
                             nextFlashcard
                           }
-                          className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40"
+                          className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Next
                         </button>
@@ -2330,25 +2789,33 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* INPUT AREA */}
+        {/* =====================================================
+            INPUT AREA
+        ===================================================== */}
 
-        <div className="sticky bottom-0 border-t bg-background px-4 py-4">
+        <div className="sticky bottom-0 border-t bg-background/95 px-3 py-3 backdrop-blur-md sm:px-4 sm:py-4">
           <div className="mx-auto max-w-5xl">
+            {/* DOCUMENT STATUS */}
+
             {documentId && (
-              <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <FileText className="h-3.5 w-3.5" />
+              <div className="mb-2 flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                <FileText className="h-3.5 w-3.5 shrink-0" />
 
                 <span className="truncate">
                   {documentName}
                 </span>
+
+                <CheckCircle2 className="ml-auto h-3.5 w-3.5 shrink-0 text-green-500" />
               </div>
             )}
+
+            {/* INPUT */}
 
             <form
               onSubmit={
                 sendMessage
               }
-              className="flex items-end gap-2 rounded-2xl border bg-card p-2 shadow-sm"
+              className="flex items-end gap-2 rounded-2xl border bg-card p-2 shadow-lg shadow-black/5"
             >
               <button
                 type="button"
@@ -2358,12 +2825,16 @@ export default function ChatPage() {
                 onClick={() =>
                   fileInputRef.current?.click()
                 }
-                className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted disabled:opacity-50"
+                className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted disabled:opacity-50"
+                title="Attach PDF"
               >
                 <Paperclip className="h-5 w-5" />
               </button>
 
               <textarea
+                ref={
+                  textareaRef
+                }
                 value={input}
                 onChange={(
                   event
@@ -2373,38 +2844,33 @@ export default function ChatPage() {
                       .value
                   )
                 }
-                onKeyDown={(
-                  event
-                ) => {
-                  if (
-                    event.key ===
-                      "Enter" &&
-                    !event.shiftKey
-                  ) {
-                    event.preventDefault();
-
-                    sendMessage();
-                  }
-                }}
+                onKeyDown={
+                  handleTextareaKeyDown
+                }
                 placeholder={
                   toolMode ===
                   "chat"
                     ? "Ask anything..."
-                    : `Use ${
-                        currentTool?.label.toLowerCase()
-                      } mode...`
+                    : documentId
+                      ? `Use ${currentTool?.label.toLowerCase()} mode...`
+                      : "Upload a PDF or ask anything..."
                 }
                 rows={1}
-                className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-2 py-2.5 text-sm outline-none"
+                disabled={
+                  loading
+                }
+                className="max-h-40 min-h-10 flex-1 resize-none overflow-y-auto bg-transparent px-2 py-2.5 text-sm leading-6 outline-none placeholder:text-muted-foreground disabled:opacity-50"
               />
 
               <button
                 type="submit"
                 disabled={
                   loading ||
+                  uploading ||
                   !input.trim()
                 }
-                className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-40"
+                className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                title="Send message"
               >
                 {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -2414,9 +2880,15 @@ export default function ChatPage() {
               </button>
             </form>
 
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              AI can make mistakes. Verify important information.
-            </p>
+            <div className="mt-2 flex items-center justify-between px-1">
+              <p className="text-[10px] text-muted-foreground sm:text-[11px]">
+                Enter to send · Shift + Enter for new line
+              </p>
+
+              <p className="hidden text-[10px] text-muted-foreground sm:block">
+                AI can make mistakes
+              </p>
+            </div>
           </div>
         </div>
       </div>

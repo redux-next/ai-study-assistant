@@ -1,21 +1,76 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+
 import {
   ChevronDown,
   LogOut,
   Settings,
   User,
 } from "lucide-react";
+
 import Link from "next/link";
 
 import UserAvatar from "./UserAvatar";
 
-export default function UserMenu() {
-  const { data: session, status } = useSession();
+type ProfileUser = {
+  id: string;
+  name: string | null;
+  email: string;
+  avatarUrl: string | null;
+};
 
-  const [open, setOpen] = useState(false);
+export default function UserMenu() {
+  const {
+    data: session,
+    status,
+  } = useSession();
+
+  const [open, setOpen] =
+    useState(false);
+
+  const [profileUser, setProfileUser] =
+    useState<ProfileUser | null>(null);
+
+  useEffect(() => {
+    if (
+      status !== "authenticated" ||
+      !session?.user
+    ) {
+      return;
+    }
+
+    async function loadProfile() {
+      try {
+        const response =
+          await fetch("/api/profile", {
+            cache: "no-store",
+          });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        if (data?.user) {
+          setProfileUser(data.user);
+        }
+      } catch (error) {
+        console.error(
+          "USER MENU PROFILE ERROR:",
+          error
+        );
+      }
+    }
+
+    loadProfile();
+  }, [
+    status,
+    session?.user?.id,
+  ]);
 
   if (status === "loading") {
     return (
@@ -27,13 +82,38 @@ export default function UserMenu() {
     return null;
   }
 
-  const user = session.user;
+  /*
+   * Prefer the freshly loaded profile from
+   * the database.
+   *
+   * Fall back to the NextAuth session.
+   */
+  const user = {
+    id:
+      profileUser?.id ||
+      session.user.id,
+
+    name:
+      profileUser?.name ??
+      session.user.name,
+
+    email:
+      profileUser?.email ??
+      session.user.email,
+
+    avatarUrl:
+      profileUser?.avatarUrl ??
+      session.user.avatarUrl ??
+      null,
+  };
 
   return (
     <div className="relative">
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() =>
+          setOpen((value) => !value)
+        }
         className="flex items-center gap-2 rounded-xl p-1.5 transition hover:bg-muted"
       >
         <UserAvatar
@@ -62,7 +142,9 @@ export default function UserMenu() {
             type="button"
             aria-label="Close menu"
             className="fixed inset-0 z-40 h-full w-full cursor-default"
-            onClick={() => setOpen(false)}
+            onClick={() =>
+              setOpen(false)
+            }
           />
 
           <div className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border bg-background shadow-xl">
@@ -88,7 +170,9 @@ export default function UserMenu() {
             <div className="p-2">
               <Link
                 href="/profile"
-                onClick={() => setOpen(false)}
+                onClick={() =>
+                  setOpen(false)
+                }
                 className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition hover:bg-muted"
               >
                 <User className="h-4 w-4" />
@@ -97,7 +181,9 @@ export default function UserMenu() {
 
               <Link
                 href="/settings"
-                onClick={() => setOpen(false)}
+                onClick={() =>
+                  setOpen(false)
+                }
                 className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition hover:bg-muted"
               >
                 <Settings className="h-4 w-4" />

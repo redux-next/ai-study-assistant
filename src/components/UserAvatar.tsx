@@ -1,6 +1,6 @@
 "use client";
 
-import { User } from "lucide-react";
+import Image from "next/image";
 
 type UserAvatarProps = {
   name?: string | null;
@@ -15,38 +15,64 @@ export default function UserAvatar({
   avatarUrl,
   size = "md",
 }: UserAvatarProps) {
+  const sizeClasses = {
+    sm: "h-8 w-8",
+    md: "h-10 w-10",
+    lg: "h-24 w-24",
+  };
+
+  const textSizes = {
+    sm: "text-xs",
+    md: "text-sm",
+    lg: "text-2xl",
+  };
+
   const initials =
     name
       ?.trim()
       .split(/\s+/)
       .slice(0, 2)
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase() ||
+      .map((part) =>
+        part.charAt(0).toUpperCase()
+      )
+      .join("") ||
     email?.charAt(0).toUpperCase() ||
     "?";
 
-  const sizes = {
-    sm: "h-8 w-8 text-xs",
-    md: "h-10 w-10 text-sm",
-    lg: "h-24 w-24 text-2xl",
-  };
+  /*
+   * Private Vercel Blob images are served
+   * through our authenticated API route.
+   *
+   * The avatarUrl itself is NOT exposed
+   * directly to the browser.
+   */
 
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name || "User"}
-        className={`${sizes[size]} rounded-full border object-cover`}
-      />
-    );
-  }
+  const imageSrc = avatarUrl
+    ? `/api/profile/avatar/view?v=${encodeURIComponent(
+        avatarUrl
+      )}`
+    : null;
 
   return (
     <div
-      className={`${sizes[size]} flex shrink-0 items-center justify-center rounded-full border bg-primary/10 font-semibold text-primary`}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 ${sizeClasses[size]}`}
     >
-      {initials || <User className="h-5 w-5" />}
+      {imageSrc ? (
+        <Image
+          key={imageSrc}
+          src={imageSrc}
+          alt={name || "Profile photo"}
+          fill
+          unoptimized
+          className="object-cover"
+        />
+      ) : (
+        <span
+          className={`font-semibold text-primary ${textSizes[size]}`}
+        >
+          {initials}
+        </span>
+      )}
     </div>
   );
 }

@@ -27,10 +27,10 @@ export type AggregateDocument = {
 export type DocumentMinAggregateOutputType = {
   id: string | null
   originalName: string | null
-  createdAt: Date | null
   fileUrl: string | null
   filename: string | null
   status: string | null
+  createdAt: Date | null
   updatedAt: Date | null
   userId: string | null
 }
@@ -38,10 +38,10 @@ export type DocumentMinAggregateOutputType = {
 export type DocumentMaxAggregateOutputType = {
   id: string | null
   originalName: string | null
-  createdAt: Date | null
   fileUrl: string | null
   filename: string | null
   status: string | null
+  createdAt: Date | null
   updatedAt: Date | null
   userId: string | null
 }
@@ -49,10 +49,10 @@ export type DocumentMaxAggregateOutputType = {
 export type DocumentCountAggregateOutputType = {
   id: number
   originalName: number
-  createdAt: number
   fileUrl: number
   filename: number
   status: number
+  createdAt: number
   updatedAt: number
   userId: number
   _all: number
@@ -62,10 +62,10 @@ export type DocumentCountAggregateOutputType = {
 export type DocumentMinAggregateInputType = {
   id?: true
   originalName?: true
-  createdAt?: true
   fileUrl?: true
   filename?: true
   status?: true
+  createdAt?: true
   updatedAt?: true
   userId?: true
 }
@@ -73,10 +73,10 @@ export type DocumentMinAggregateInputType = {
 export type DocumentMaxAggregateInputType = {
   id?: true
   originalName?: true
-  createdAt?: true
   fileUrl?: true
   filename?: true
   status?: true
+  createdAt?: true
   updatedAt?: true
   userId?: true
 }
@@ -84,10 +84,10 @@ export type DocumentMaxAggregateInputType = {
 export type DocumentCountAggregateInputType = {
   id?: true
   originalName?: true
-  createdAt?: true
   fileUrl?: true
   filename?: true
   status?: true
+  createdAt?: true
   updatedAt?: true
   userId?: true
   _all?: true
@@ -168,10 +168,10 @@ export type DocumentGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 export type DocumentGroupByOutputType = {
   id: string
   originalName: string
-  createdAt: Date
   fileUrl: string
   filename: string
   status: string
+  createdAt: Date
   updatedAt: Date
   userId: string | null
   _count: DocumentCountAggregateOutputType | null
@@ -200,10 +200,10 @@ export type DocumentWhereInput = {
   NOT?: Prisma.DocumentWhereInput | Prisma.DocumentWhereInput[]
   id?: Prisma.StringFilter<"Document"> | string
   originalName?: Prisma.StringFilter<"Document"> | string
-  createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   fileUrl?: Prisma.StringFilter<"Document"> | string
   filename?: Prisma.StringFilter<"Document"> | string
   status?: Prisma.StringFilter<"Document"> | string
+  createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   userId?: Prisma.StringNullableFilter<"Document"> | string | null
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -213,10 +213,10 @@ export type DocumentWhereInput = {
 export type DocumentOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   originalName?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
   fileUrl?: Prisma.SortOrder
   filename?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -229,10 +229,10 @@ export type DocumentWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.DocumentWhereInput[]
   NOT?: Prisma.DocumentWhereInput | Prisma.DocumentWhereInput[]
   originalName?: Prisma.StringFilter<"Document"> | string
-  createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   fileUrl?: Prisma.StringFilter<"Document"> | string
   filename?: Prisma.StringFilter<"Document"> | string
   status?: Prisma.StringFilter<"Document"> | string
+  createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   userId?: Prisma.StringNullableFilter<"Document"> | string | null
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -242,10 +242,10 @@ export type DocumentWhereUniqueInput = Prisma.AtLeast<{
 export type DocumentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   originalName?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
   fileUrl?: Prisma.SortOrder
   filename?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.DocumentCountOrderByAggregateInput
@@ -259,10 +259,10 @@ export type DocumentScalarWhereWithAggregatesInput = {
   NOT?: Prisma.DocumentScalarWhereWithAggregatesInput | Prisma.DocumentScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Document"> | string
   originalName?: Prisma.StringWithAggregatesFilter<"Document"> | string
-  createdAt?: Prisma.DateTimeWithAggregatesFilter<"Document"> | Date | string
   fileUrl?: Prisma.StringWithAggregatesFilter<"Document"> | string
   filename?: Prisma.StringWithAggregatesFilter<"Document"> | string
   status?: Prisma.StringWithAggregatesFilter<"Document"> | string
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Document"> | Date | string
   userId?: Prisma.StringNullableWithAggregatesFilter<"Document"> | string | null
 }
@@ -270,10 +270,10 @@ export type DocumentScalarWhereWithAggregatesInput = {
 export type DocumentCreateInput = {
   id?: string
   originalName: string
-  createdAt?: Date | string
   fileUrl: string
   filename: string
   status?: string
+  createdAt?: Date | string
   updatedAt?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutDocumentsInput
   chunks?: Prisma.DocumentChunkCreateNestedManyWithoutDocumentInput
@@ -282,10 +282,10 @@ export type DocumentCreateInput = {
 export type DocumentUncheckedCreateInput = {
   id?: string
   originalName: string
-  createdAt?: Date | string
   fileUrl: string
   filename: string
   status?: string
+  createdAt?: Date | string
   updatedAt?: Date | string
   userId?: string | null
   chunks?: Prisma.DocumentChunkUncheckedCreateNestedManyWithoutDocumentInput
@@ -294,10 +294,10 @@ export type DocumentUncheckedCreateInput = {
 export type DocumentUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   originalName?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneWithoutDocumentsNestedInput
   chunks?: Prisma.DocumentChunkUpdateManyWithoutDocumentNestedInput
@@ -306,10 +306,10 @@ export type DocumentUpdateInput = {
 export type DocumentUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   originalName?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chunks?: Prisma.DocumentChunkUncheckedUpdateManyWithoutDocumentNestedInput
@@ -318,10 +318,10 @@ export type DocumentUncheckedUpdateInput = {
 export type DocumentCreateManyInput = {
   id?: string
   originalName: string
-  createdAt?: Date | string
   fileUrl: string
   filename: string
   status?: string
+  createdAt?: Date | string
   updatedAt?: Date | string
   userId?: string | null
 }
@@ -329,20 +329,20 @@ export type DocumentCreateManyInput = {
 export type DocumentUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   originalName?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type DocumentUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   originalName?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -360,10 +360,10 @@ export type DocumentOrderByRelationAggregateInput = {
 export type DocumentCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   originalName?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
   fileUrl?: Prisma.SortOrder
   filename?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   userId?: Prisma.SortOrder
 }
@@ -371,10 +371,10 @@ export type DocumentCountOrderByAggregateInput = {
 export type DocumentMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   originalName?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
   fileUrl?: Prisma.SortOrder
   filename?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   userId?: Prisma.SortOrder
 }
@@ -382,10 +382,10 @@ export type DocumentMaxOrderByAggregateInput = {
 export type DocumentMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   originalName?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
   fileUrl?: Prisma.SortOrder
   filename?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   userId?: Prisma.SortOrder
 }
@@ -454,10 +454,10 @@ export type DocumentUpdateOneRequiredWithoutChunksNestedInput = {
 export type DocumentCreateWithoutUserInput = {
   id?: string
   originalName: string
-  createdAt?: Date | string
   fileUrl: string
   filename: string
   status?: string
+  createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.DocumentChunkCreateNestedManyWithoutDocumentInput
 }
@@ -465,10 +465,10 @@ export type DocumentCreateWithoutUserInput = {
 export type DocumentUncheckedCreateWithoutUserInput = {
   id?: string
   originalName: string
-  createdAt?: Date | string
   fileUrl: string
   filename: string
   status?: string
+  createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.DocumentChunkUncheckedCreateNestedManyWithoutDocumentInput
 }
@@ -505,10 +505,10 @@ export type DocumentScalarWhereInput = {
   NOT?: Prisma.DocumentScalarWhereInput | Prisma.DocumentScalarWhereInput[]
   id?: Prisma.StringFilter<"Document"> | string
   originalName?: Prisma.StringFilter<"Document"> | string
-  createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   fileUrl?: Prisma.StringFilter<"Document"> | string
   filename?: Prisma.StringFilter<"Document"> | string
   status?: Prisma.StringFilter<"Document"> | string
+  createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   userId?: Prisma.StringNullableFilter<"Document"> | string | null
 }
@@ -516,10 +516,10 @@ export type DocumentScalarWhereInput = {
 export type DocumentCreateWithoutChunksInput = {
   id?: string
   originalName: string
-  createdAt?: Date | string
   fileUrl: string
   filename: string
   status?: string
+  createdAt?: Date | string
   updatedAt?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutDocumentsInput
 }
@@ -527,10 +527,10 @@ export type DocumentCreateWithoutChunksInput = {
 export type DocumentUncheckedCreateWithoutChunksInput = {
   id?: string
   originalName: string
-  createdAt?: Date | string
   fileUrl: string
   filename: string
   status?: string
+  createdAt?: Date | string
   updatedAt?: Date | string
   userId?: string | null
 }
@@ -554,10 +554,10 @@ export type DocumentUpdateToOneWithWhereWithoutChunksInput = {
 export type DocumentUpdateWithoutChunksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   originalName?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneWithoutDocumentsNestedInput
 }
@@ -565,10 +565,10 @@ export type DocumentUpdateWithoutChunksInput = {
 export type DocumentUncheckedUpdateWithoutChunksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   originalName?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -576,20 +576,20 @@ export type DocumentUncheckedUpdateWithoutChunksInput = {
 export type DocumentCreateManyUserInput = {
   id?: string
   originalName: string
-  createdAt?: Date | string
   fileUrl: string
   filename: string
   status?: string
+  createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type DocumentUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   originalName?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.DocumentChunkUpdateManyWithoutDocumentNestedInput
 }
@@ -597,10 +597,10 @@ export type DocumentUpdateWithoutUserInput = {
 export type DocumentUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   originalName?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.DocumentChunkUncheckedUpdateManyWithoutDocumentNestedInput
 }
@@ -608,10 +608,10 @@ export type DocumentUncheckedUpdateWithoutUserInput = {
 export type DocumentUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   originalName?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   fileUrl?: Prisma.StringFieldUpdateOperationsInput | string
   filename?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -649,10 +649,10 @@ export type DocumentCountOutputTypeCountChunksArgs<ExtArgs extends runtime.Types
 export type DocumentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   originalName?: boolean
-  createdAt?: boolean
   fileUrl?: boolean
   filename?: boolean
   status?: boolean
+  createdAt?: boolean
   updatedAt?: boolean
   userId?: boolean
   user?: boolean | Prisma.Document$userArgs<ExtArgs>
@@ -663,10 +663,10 @@ export type DocumentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
 export type DocumentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   originalName?: boolean
-  createdAt?: boolean
   fileUrl?: boolean
   filename?: boolean
   status?: boolean
+  createdAt?: boolean
   updatedAt?: boolean
   userId?: boolean
   user?: boolean | Prisma.Document$userArgs<ExtArgs>
@@ -675,10 +675,10 @@ export type DocumentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type DocumentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   originalName?: boolean
-  createdAt?: boolean
   fileUrl?: boolean
   filename?: boolean
   status?: boolean
+  createdAt?: boolean
   updatedAt?: boolean
   userId?: boolean
   user?: boolean | Prisma.Document$userArgs<ExtArgs>
@@ -687,15 +687,15 @@ export type DocumentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type DocumentSelectScalar = {
   id?: boolean
   originalName?: boolean
-  createdAt?: boolean
   fileUrl?: boolean
   filename?: boolean
   status?: boolean
+  createdAt?: boolean
   updatedAt?: boolean
   userId?: boolean
 }
 
-export type DocumentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "originalName" | "createdAt" | "fileUrl" | "filename" | "status" | "updatedAt" | "userId", ExtArgs["result"]["document"]>
+export type DocumentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "originalName" | "fileUrl" | "filename" | "status" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["document"]>
 export type DocumentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.Document$userArgs<ExtArgs>
   chunks?: boolean | Prisma.Document$chunksArgs<ExtArgs>
@@ -717,10 +717,10 @@ export type $DocumentPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     originalName: string
-    createdAt: Date
     fileUrl: string
     filename: string
     status: string
+    createdAt: Date
     updatedAt: Date
     userId: string | null
   }, ExtArgs["result"]["document"]>
@@ -1150,10 +1150,10 @@ export interface Prisma__DocumentClient<T, Null = never, ExtArgs extends runtime
 export interface DocumentFieldRefs {
   readonly id: Prisma.FieldRef<"Document", 'String'>
   readonly originalName: Prisma.FieldRef<"Document", 'String'>
-  readonly createdAt: Prisma.FieldRef<"Document", 'DateTime'>
   readonly fileUrl: Prisma.FieldRef<"Document", 'String'>
   readonly filename: Prisma.FieldRef<"Document", 'String'>
   readonly status: Prisma.FieldRef<"Document", 'String'>
+  readonly createdAt: Prisma.FieldRef<"Document", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Document", 'DateTime'>
   readonly userId: Prisma.FieldRef<"Document", 'String'>
 }

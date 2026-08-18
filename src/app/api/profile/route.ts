@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+
+import prisma from "@/lib/prisma";
+
 import bcrypt from "bcryptjs";
 
 export async function GET() {
@@ -18,19 +21,20 @@ export async function GET() {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: {
-        id: session.user.id,
-      },
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          id: session.user.id,
+        },
 
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        createdAt: true,
-      },
-    });
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+          createdAt: true,
+        },
+      });
 
     if (!user) {
       return NextResponse.json(
@@ -47,11 +51,15 @@ export async function GET() {
       user,
     });
   } catch (error) {
-    console.error("PROFILE GET ERROR:", error);
+    console.error(
+      "PROFILE GET ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
-        error: "Failed to load profile.",
+        error:
+          "Failed to load profile.",
       },
       {
         status: 500,
@@ -71,31 +79,31 @@ export async function PUT(request: Request) {
         },
         {
           status: 401,
-        }
+        },
       );
     }
 
     const body = await request.json();
 
-    const name = String(body.name || "").trim();
+    const name =
+      typeof body?.name === "string"
+        ? body.name.trim()
+        : "";
 
-    const email = String(body.email || "")
-      .trim()
-      .toLowerCase();
+    const email =
+      typeof body?.email === "string"
+        ? body.email.trim().toLowerCase()
+        : "";
 
-    const avatarUrl =
-      body.avatarUrl === null ||
-      body.avatarUrl === undefined
-        ? null
-        : String(body.avatarUrl).trim() || null;
+    const currentPassword =
+      typeof body?.currentPassword === "string"
+        ? body.currentPassword
+        : "";
 
-    const currentPassword = String(
-      body.currentPassword || ""
-    );
-
-    const newPassword = String(
-      body.newPassword || ""
-    );
+    const newPassword =
+      typeof body?.newPassword === "string"
+        ? body.newPassword
+        : "";
 
     if (!name) {
       return NextResponse.json(
@@ -104,7 +112,19 @@ export async function PUT(request: Request) {
         },
         {
           status: 400,
-        }
+        },
+      );
+    }
+
+    if (name.length < 2) {
+      return NextResponse.json(
+        {
+          error:
+            "Name must contain at least 2 characters.",
+        },
+        {
+          status: 400,
+        },
       );
     }
 
@@ -115,7 +135,18 @@ export async function PUT(request: Request) {
         },
         {
           status: 400,
-        }
+        },
+      );
+    }
+
+    if (!email.includes("@")) {
+      return NextResponse.json(
+        {
+          error: "Please enter a valid email address.",
+        },
+        {
+          status: 400,
+        },
       );
     }
 
@@ -132,7 +163,7 @@ export async function PUT(request: Request) {
         },
         {
           status: 404,
-        }
+        },
       );
     }
 
@@ -153,7 +184,7 @@ export async function PUT(request: Request) {
         },
         {
           status: 409,
-        }
+        },
       );
     }
 
@@ -168,23 +199,24 @@ export async function PUT(request: Request) {
           },
           {
             status: 400,
-          }
+          },
         );
       }
 
       const passwordValid = await bcrypt.compare(
         currentPassword,
-        user.password
+        user.password,
       );
 
       if (!passwordValid) {
         return NextResponse.json(
           {
-            error: "Current password is incorrect.",
+            error:
+              "Current password is incorrect.",
           },
           {
             status: 400,
-          }
+          },
         );
       }
 
@@ -196,42 +228,91 @@ export async function PUT(request: Request) {
           },
           {
             status: 400,
-          }
+          },
         );
       }
 
       hashedPassword = await bcrypt.hash(
         newPassword,
-        12
+        12,
       );
     }
 
-    const updatedUser = await prisma.user.update({
-      where: {
-        id: user.id,
-      },
+    /*
+     * IMPORTANT
+     *
+     * If avatarUrl is not included in the request,
+     * keep the existing avatar.
+     *
+     * If avatarUrl is null, remove the avatar.
+     *
+     * If avatarUrl is a string, save the new URL.
+     */
 
-      data: {
-        name,
-        email,
-        avatarUrl,
-        password: hashedPassword,
-      },
+    const avatarWasProvided =
+      Object.prototype.hasOwnProperty.call(
+        body,
+        "avatarUrl",
+      );
 
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-      },
-    });
+    let avatarUrl = user.avatarUrl;
+
+    if (avatarWasProvided) {
+      if (
+        body.avatarUrl === null ||
+        body.avatarUrl === ""
+      ) {
+        avatarUrl = null;
+      } else if (
+        typeof body.avatarUrl === "string"
+      ) {
+        avatarUrl = body.avatarUrl.trim() || null;
+      }
+    }
+
+    const updatedUser =
+      await prisma.user.update({
+        where: {
+          id: user.id,
+        },
+
+        data: {
+          name,
+          email,
+          avatarUrl,
+          password: hashedPassword,
+        },
+
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+          createdAt: true,
+        },
+      });
 
     return NextResponse.json({
       success: true,
       user: updatedUser,
     });
-  } catch (error) {
-    console.error("PROFILE UPDATE ERROR:", error);
+  } catch (error: any) {
+    console.error(
+      "PROFILE UPDATE ERROR:",
+      error,
+    );
+
+    if (error?.code === "P2002") {
+      return NextResponse.json(
+        {
+          error:
+            "Another account already uses this email.",
+        },
+        {
+          status: 409,
+        },
+      );
+    }
 
     return NextResponse.json(
       {
@@ -239,7 +320,7 @@ export async function PUT(request: Request) {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }
