@@ -1,96 +1,102 @@
-# 🤖 AI Study Assistant
+# 🧠 AI Study Assistant
 
-> **Your personal AI-powered study companion — learn smarter, understand better, and revise faster.**
+An AI-powered study companion built for students.
 
-AI Study Assistant is a modern, full-stack AI learning platform built for students. It combines AI chat, PDF/document understanding, summaries, quizzes, flashcards, chat history, profiles, and PWA support into one study workspace.
-
-Instead of switching between multiple tools, students can **ask questions, upload study material, practice, and revise from one place.**
+AI Study Assistant helps students understand difficult topics, study PDFs, ask questions, generate quizzes, create flashcards, summarize study material, and continue previous conversations — all from one modern web application.
 
 ---
 
 ## ✨ Features
 
-### 🤖 AI Study Chat
+### 🤖 AI Chat
 
-Ask the AI about almost any study topic.
-
-- Ask questions about school subjects
-- Get simple explanations
-- Understand difficult concepts
-- Ask follow-up questions
-- Study topics outside uploaded documents
-- Continue conversations naturally
-- Get exam-focused explanations
-
----
-
-### 📄 PDF & Document Study
-
-Upload your study PDFs and use them as AI context.
+Ask the AI questions about almost any study topic.
 
 You can:
 
-- Upload PDF study material
-- Process documents
-- Ask questions about uploaded PDFs
-- Find information inside notes
-- Understand difficult sections
-- Get explanations based on your documents
-- Continue studying from previously uploaded material
+- Ask general academic questions
+- Get simple explanations
+- Ask follow-up questions
+- Learn difficult concepts step-by-step
+- Ask questions related to uploaded study material
+- Continue previous conversations
 
-The document content is processed into smaller chunks so relevant information can be provided to the AI when answering questions.
+---
+
+### 📄 PDF Study Assistant
+
+Upload your study PDFs and interact with them using AI.
+
+Features include:
+
+- PDF upload
+- PDF processing
+- Document storage
+- Text extraction
+- Document chunking
+- AI-powered document questions
+- Context-aware answers
+- Open documents directly from the dashboard
+
+This makes the application useful for:
+
+- Textbooks
+- Class notes
+- Study material
+- Question papers
+- Revision notes
+- Research documents
 
 ---
 
 ### 📝 AI Summarization
 
-Turn long study material into concise notes.
+Turn large study material into concise notes.
 
-Useful for:
+The AI can help summarize:
 
-- Chapter revision
-- Exam preparation
-- Long PDFs
-- Class notes
-- Quick revision
-- Last-minute study
+- PDF content
+- Chapters
+- Topics
+- Long explanations
+- Study notes
 
 ---
 
-### 🧠 AI Quiz Generator
+### 🧠 AI Quizzes
 
-Generate AI-powered quizzes to test your knowledge.
+Generate AI-powered quizzes to test your understanding.
 
-Use quizzes to:
+The quiz system can be used for:
 
-- Test understanding
-- Practice concepts
-- Prepare for exams
-- Improve active recall
-- Identify weak topics
+- Exam preparation
+- Chapter revision
+- Self-testing
+- Concept practice
+- Quick revision
 
 ---
 
 ### 📚 AI Flashcards
 
-Generate flashcards for fast revision.
+Generate flashcards from study material.
 
-Flashcards can be useful for:
+Flashcards are useful for:
 
-- Definitions
+- Memorization
+- Revision
+- Important definitions
 - Formulas
-- Important facts
 - Concepts
-- Vocabulary
-- Exam revision
+- Exam preparation
 
 ---
 
 ### 💬 Chat History
 
-Previous conversations can be saved and accessed again.
+Previous conversations can be stored and accessed from the dashboard.
 
-Students can:
+Users can:
 
 - View recent chats
 - Continue previous conversations
@@ -99,30 +105,220 @@ Students can:
 
 ---
 
-### 👤 User Profiles
+### 👤 User Accounts
 
-Users have their own profile.
+The application supports user authentication.
 
-Profile features include:
+Users can:
 
-- Name
-- Email
-- Profile avatar
-- Account information
-- Dynamic avatar loading
+- Register
+- Login
+- Logout
+- Maintain a personal profile
+- Add a profile name
+- Use a profile avatar
+- Access their own study data
 
-The dashboard automatically displays the user's profile information.
+Unauthenticated users are prevented from accessing protected dashboard functionality.
 
 ---
 
-### 🖼️ Dynamic Profile Avatar
+### 🖼️ Profile Avatar
 
-Profile avatars are loaded dynamically through the profile avatar API.
+Users can have a profile avatar.
 
-Example:
+The dashboard automatically loads the user's avatar through the profile avatar API.
 
-<img
-  src="/api/profile/avatar/view"
-  alt={profile.name || "Profile avatar"}
-  className="h-full w-full object-cover"
-/>
+If an avatar is unavailable, the application automatically falls back to the user's initials.
+
+---
+
+### 🌙 Dark Mode
+
+The application includes light and dark themes.
+
+The selected theme is saved locally so it remains available when the user returns.
+
+---
+
+### 📱 Progressive Web App
+
+AI Study Assistant is designed as a Progressive Web App (PWA).
+
+Supported features include:
+
+- Installable web application
+- App-like experience
+- Install prompt
+- Mobile-friendly interface
+- Responsive design
+- iOS installation instructions
+- Standalone display mode detection
+
+---
+
+### 📊 Dashboard
+
+The dashboard provides a central place to manage studying.
+
+It includes:
+
+- User profile
+- Recent chats
+- Uploaded documents
+- Quick study actions
+- AI chat access
+- PDF upload access
+- Quiz access
+- Flashcard access
+- PWA installation
+- Dark mode
+- Study assistant information
+
+---
+
+## 🖥️ Screens
+
+The application contains several major sections.
+
+### Landing Page
+
+Introduces AI Study Assistant and provides access to the application.
+
+### Authentication
+
+Users can register and log in securely.
+
+### Dashboard
+
+The main study workspace showing:
+
+- Profile
+- Recent chats
+- Documents
+- Quick actions
+- Application features
+
+### AI Chat
+
+The main AI learning interface.
+
+### Profile
+
+Users can manage their personal profile and avatar.
+
+---
+
+# 🛠️ Tech Stack
+
+## Frontend
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Lucide React
+- React Markdown
+
+## AI
+
+- OpenRouter
+- OpenAI-compatible SDK
+- AI-powered text generation
+
+## Database
+
+- PostgreSQL
+- Neon Database
+- Prisma ORM
+
+## Authentication
+
+- NextAuth.js
+- Credentials Provider
+- bcryptjs
+- JWT sessions
+
+## File Storage
+
+- Vercel Blob
+
+## PWA
+
+- Web App Manifest
+- Service Worker
+- Installable web application
+
+## Deployment
+
+- Vercel
+- GitHub
+
+---
+
+# 🏗️ Project Architecture
+
+The project uses the Next.js App Router architecture.
+
+```text
+ai-study-assistant/
+│
+├── public/
+│   ├── icons/
+│   ├── developer-avatar.png
+│   └── ...
+│
+├── prisma/
+│   ├── schema.prisma
+│   └── migrations/
+│
+├── src/
+│   │
+│   ├── app/
+│   │   │
+│   │   ├── api/
+│   │   │   ├── auth/
+│   │   │   ├── chat/
+│   │   │   ├── chats/
+│   │   │   ├── documents/
+│   │   │   ├── profile/
+│   │   │   └── quiz/
+│   │   │
+│   │   ├── dashboard/
+│   │   │   ├── page.tsx
+│   │   │   └── DashboardClient.tsx
+│   │   │
+│   │   ├── chat/
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── login/
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── register/
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── profile/
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   │
+│   ├── components/
+│   │   ├── UserMenu.tsx
+│   │   ├── UploadPdf.tsx
+│   │   └── ...
+│   │
+│   └── lib/
+│       ├── auth.ts
+│       ├── prisma.ts
+│       ├── openrouter.ts
+│       └── ...
+│
+├── .env
+├── .gitignore
+├── next.config.ts
+├── package.json
+├── prisma.config.ts
+├── tailwind.config.ts
+├── tsconfig.json
+└── README.md
